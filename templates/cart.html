@@ -40,7 +40,7 @@
                 </table>
             </div>
             <div class="cart-total">Total: UGX <span id="cart-total">0.00</span></div>
-            <a href="/checkout" class="btn checkout-btn">Proceed to Checkout</a>
+            <a href="{{ url_for('checkout') }}" class="btn checkout-btn" id="checkout-btn">Proceed to Checkout</a>
         </div>
     </section>
 
@@ -56,8 +56,10 @@
                 .then(res => res.json())
                 .then(data => {
                     const tbody = document.getElementById('cart-table-body');
+                    const checkoutBtn = document.getElementById('checkout-btn');
                     if (data.items.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="5" class="message">Your cart is empty.</td></tr>';
+                        checkoutBtn.style.display = 'none'; // Hide button if cart is empty
                     } else {
                         tbody.innerHTML = data.items.map(item => `
                             <tr>
@@ -71,6 +73,7 @@
                                 <td><button onclick="removeFromCart(${item.id})" class="btn remove-btn">Remove</button></td>
                             </tr>
                         `).join('');
+                        checkoutBtn.style.display = 'block'; // Show button if cart has items
                     }
                     document.getElementById('cart-total').textContent = data.total.toFixed(2);
                     document.getElementById('cart-count').textContent = data.items.length;
