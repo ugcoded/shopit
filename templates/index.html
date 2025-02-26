@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Shop</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1 class="logo">Elite Shop</h1>
+            <form method="POST" action="/search" class="search-form">
+                <input type="text" name="search" placeholder="Search products..." value="{{ search_query }}" class="search-input">
+                <button type="submit" class="search-btn">Search</button>
+            </form>
+            <nav>
+                <a href="/">Shop</a>
+                <a href="/cart">Cart (<span id="cart-count">0</span>)</a>
+                <a href="/orders">Orders</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="products-section">
+        <div class="container">
+            <h2>Welcome to Elite Shop</h2>
+            {% if message %}
+                <p class="message">{{ message }}</p>
+            {% endif %}
+            <div class="products">
+                {% for product in products %}
+                <div class="product">
+                    <img src="{{ url_for('static', filename=product.image) }}" alt="{{ product.name }}" class="product-image">
+                    <h3>{{ product.name }}</h3>
+                    <p class="description">{{ product.description }}</p>
+                    <p class="price">UGX {{ "%.2f"|format(product.price) }}</p>
+                    <input type="number" id="quantity-{{ product.id }}" value="1" min="1" class="quantity-input">
+                    <button onclick="addToCart({{ product.id }})" class="btn">Add to Cart</button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 Elite Shop. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function addToCart(productId) {
+            const quantity = document.getElementById(`quantity-${productId}`).value;
+            fetch('/cart', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({product_id: productId, quantity: quantity})
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('cart-count').textContent = data.cart_count;
+                alert(data.message);
+            });
+        }
+
+        fetch('/cart/data')
+            .then(res => res.json())
+            .then(data => document.getElementById('cart-count').textContent = data.items.length);
+    </script>
+</body>
+</html>

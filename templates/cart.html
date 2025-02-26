@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart - Elite Shop</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1 class="logo">Elite Shop</h1>
+            <form method="POST" action="/search" class="search-form">
+                <input type="text" name="search" placeholder="Search products..." class="search-input">
+                <button type="submit" class="search-btn">Search</button>
+            </form>
+            <nav>
+                <a href="/">Shop</a>
+                <a href="/orders">Orders</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="cart-section">
+        <div class="container">
+            <h2>Your Cart</h2>
+            <div id="cart-items" class="cart-items">
+                <table id="cart-table" class="order-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cart-table-body"></tbody>
+                </table>
+            </div>
+            <div class="cart-total">Total: UGX <span id="cart-total">0.00</span></div>
+            <a href="/checkout" class="btn checkout-btn">Proceed to Checkout</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 Elite Shop. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function updateCart() {
+            fetch('/cart/data')
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById('cart-table-body');
+                    if (data.items.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="message">Your cart is empty.</td></tr>';
+                    } else {
+                        tbody.innerHTML = data.items.map(item => `
+                            <tr>
+                                <td>${item.name}</td>
+                                <td>UGX ${item.price.toFixed(2)}</td>
+                                <td>
+                                    <input type="number" id="remove-quantity-${item.id}" value="1" min="1" max="${item.quantity}" class="quantity-input">
+                                    (x${item.quantity})
+                                </td>
+                                <td class="money">UGX ${(item.price * item.quantity).toFixed(2)}</td>
+                                <td><button onclick="removeFromCart(${item.id})" class="btn remove-btn">Remove</button></td>
+                            </tr>
+                        `).join('');
+                    }
+                    document.getElementById('cart-total').textContent = data.total.toFixed(2);
+                    document.getElementById('cart-count').textContent = data.items.length;
+                });
+        }
+
+        function removeFromCart(productId) {
+            const quantity = document.getElementById(`remove-quantity-${productId}`).value;
+            fetch(`/cart/remove/${productId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({quantity: quantity})
+            })
+                .then(res => res.json())
+                .then(data => {
+                    updateCart();
+                    alert(data.message);
+                });
+        }
+
+        updateCart();
+    </script>
+</body>
+</html>

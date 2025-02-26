@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Elite Shop</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1 class="logo">Elite Shop</h1>
+            <form method="POST" action="/search" class="search-form">
+                <input type="text" name="search" placeholder="Search products..." class="search-input">
+                <button type="submit" class="search-btn">Search</button>
+            </form>
+            <nav>
+                <a href="/">Shop</a>
+                <a href="/cart">Cart</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="checkout-section">
+        <div class="container">
+            <h2>Checkout</h2>
+            {% if error %}
+                <p class="error">{{ error }}</p>
+            {% endif %}
+            {% if success %}
+                <p class="success">{{ success }}</p>
+                <a href="/" class="btn">Continue Shopping</a>
+            {% else %}
+            <form method="POST" class="checkout-form">
+                <input type="text" name="name" placeholder="Full Name" required>
+                <input type="tel" name="phone" placeholder="Phone Number" required pattern="[0-9]{10}" title="Enter a 10-digit phone number">
+                <button type="submit" class="btn">Place Order</button>
+            </form>
+            {% endif %}
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 Elite Shop. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
