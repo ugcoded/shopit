@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session
-from flask_sqlalchemy import SQLAlchemy  # Corrected import (was flask_sqlalchemy)
+from flask_sqlalchemy import SQLAlchemy
 import os
 from werkzeug.utils import secure_filename
 from sqlalchemy import func
@@ -158,7 +158,7 @@ def checkout():
         db.session.commit()
         session['buyer_phone'] = data['phone']
         return render_template('checkout.html', success="Order placed successfully!")
-    return render_template('cart.html')
+    return render_template('checkout.html')  # Fixed: was 'cart.html'
 
 
 @app.route('/orders', methods=['GET', 'POST'])
