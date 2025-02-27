@@ -157,8 +157,9 @@ def checkout():
             db.session.delete(item)
         db.session.commit()
         session['buyer_phone'] = data['phone']
-        return render_template('checkout.html', success="Order placed successfully!")
-    return render_template('checkout.html')  # Fixed: was 'cart.html'
+        return render_template('checkout.html',
+                               success="Order placed successfully! Use your phone number ({{ data['phone'] }}) to track your order.")
+    return render_template('checkout.html')
 
 
 @app.route('/orders', methods=['GET', 'POST'])
