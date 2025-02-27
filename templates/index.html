@@ -68,6 +68,25 @@
         fetch('/cart/data')
             .then(res => res.json())
             .then(data => document.getElementById('cart-count').textContent = data.items.length);
+
+        // Footer visibility logic
+        function toggleFooter() {
+            const footer = document.querySelector('footer');
+            const bodyHeight = document.body.scrollHeight;
+            const viewportHeight = window.innerHeight;
+            const scrollPosition = window.scrollY + viewportHeight;
+
+            if (bodyHeight <= viewportHeight) {
+                footer.style.display = 'none'; // Hide if content fits viewport
+            } else {
+                footer.style.display = (scrollPosition >= bodyHeight - 10) ? 'block' : 'none'; // Show near bottom
+            }
+        }
+
+        // Run on load and on scroll/resize
+        window.addEventListener('load', toggleFooter);
+        window.addEventListener('scroll', toggleFooter);
+        window.addEventListener('resize', toggleFooter);
     </script>
 </body>
 </html>
