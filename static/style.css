@@ -9,21 +9,21 @@ body {
     line-height: 1.6;
     color: #333;
     background: linear-gradient(135deg, #2f2f2f, #1a1a1a);
-    padding-bottom: 10vh; /* Relative to viewport height */
+    padding-bottom: 10vh;
     min-height: 100vh;
 }
 
 .container {
     max-width: 1300px;
-    width: 90%; /* Flexible width */
+    width: 90%;
     margin: 0 auto;
-    padding: 0 15px; /* Reduced for small screens */
+    padding: 0 15px;
 }
 
 header {
     background: linear-gradient(90deg, rgba(47, 47, 47, 0.9), rgba(26, 26, 26, 0.9));
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    padding: 1rem 0; /* Relative units */
+    padding: 1rem 0;
     position: sticky;
     top: 0;
     z-index: 100;
@@ -37,7 +37,7 @@ header .container {
 }
 
 .logo {
-    font-size: clamp(1.2rem, 4vw, 1.8rem); /* Scales with viewport */
+    font-size: clamp(1.2rem, 4vw, 1.8rem);
     font-weight: 700;
     color: #fff;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
@@ -49,7 +49,7 @@ header .container {
     flex: 1;
     max-width: 400px;
     margin: 0.5rem 1rem;
-    width: 100%; /* Full width on small screens */
+    width: 100%;
 }
 
 .search-input {
@@ -98,7 +98,7 @@ nav a:hover {
 }
 
 .products-section, .cart-section, .checkout-section, .orders-section {
-    padding: 2rem 0; /* Relative units */
+    padding: 2rem 0;
 }
 
 h2 {
@@ -220,7 +220,7 @@ h3 {
 
 .cart-items {
     margin-bottom: 1.5rem;
-    overflow-x: auto; /* Horizontal scroll for tables on small screens */
+    overflow-x: auto;
 }
 
 .cart-total {
@@ -441,7 +441,6 @@ footer {
 
 .order-table-container {
     margin-bottom: 2rem;
-    overflow-x: auto; /* Horizontal scroll for tables on small screens */
 }
 
 .customer-header {
@@ -459,7 +458,6 @@ footer {
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    min-width: 600px; /* Ensures table scrolls on small screens */
 }
 
 .order-table th, .order-table td {
@@ -502,7 +500,7 @@ footer {
     color: #2c3e50;
     cursor: pointer;
     transition: border-color 0.3s ease;
-    width: 100%; /* Full width on small screens */
+    width: 100%;
 }
 
 .status-form select:hover {
@@ -528,8 +526,8 @@ footer {
     gap: 1rem;
 }
 
-/* Media Queries for Small Screens */
-@media (max-width: 480px) {
+/* Media Queries for Small Screens (≤ 768px) */
+@media (max-width: 768px) {
     header .container {
         flex-direction: column;
         align-items: flex-start;
@@ -569,21 +567,63 @@ footer {
     .cart-total, .checkout-btn {
         text-align: center;
     }
-}
 
-/* Media Queries for Larger Mobile Screens (up to 768px) */
-@media (max-width: 768px) {
     .dashboard-toggle {
         flex-direction: column;
         gap: 0.5rem;
     }
 
-    .stats-container {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    /* Vertical Table Layout for Mobile */
+    .order-table {
+        display: block;
+        min-width: 100%; /* Full width on mobile */
     }
 
-    .order-table-container, .cart-items {
+    .order-table thead {
+        display: none; /* Hide headers on mobile */
+    }
+
+    .order-table tbody, .order-table tr, .order-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .order-table tr {
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #ddd;
+        padding-bottom: 0.5rem;
+    }
+
+    .order-table td {
+        padding: 0.5rem 1rem;
+        position: relative;
+        text-align: right;
+    }
+
+    .order-table td::before {
+        content: attr(data-label); /* Use data-label for column name */
+        position: absolute;
+        left: 1rem;
+        font-weight: 700;
+        color: #2c3e50;
+        text-align: left;
+        width: 40%; /* Adjust as needed */
+    }
+
+    .order-table td select, .order-table td button {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+
+    .order-table td .status-form {
+        display: block;
+    }
+}
+
+/* Larger Mobile Screens (still horizontal unless ≤ 768px) */
+@media (min-width: 769px) {
+    .order-table-container {
         overflow-x: auto;
-        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        -webkit-overflow-scrolling: touch;
     }
 }
