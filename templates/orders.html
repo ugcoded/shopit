@@ -144,6 +144,9 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
+                            <form method="POST" action="{{ url_for('logout', role='buyer') }}" class="logout-form">
+                                <button type="submit" class="btn remove-btn">Logout</button>
+                            </form>
                         </div>
                     {% else %}
                         {% set grouped_orders = orders | groupby('customer_phone') %}
@@ -196,12 +199,11 @@
                     {% endif %}
                 {% else %}
                     <p class="message">No orders found.</p>
-                {% endif %}
-
-                {% if role == 'buyer' %}
-                    <form method="POST" action="{{ url_for('logout', role='buyer') }}" class="logout-form">
-                        <button type="submit" class="btn remove-btn">Logout</button>
-                    </form>
+                    {% if role == 'buyer' %}
+                        <form method="POST" action="{{ url_for('logout', role='buyer') }}" class="logout-form">
+                            <button type="submit" class="btn remove-btn">Logout</button>
+                        </form>
+                    {% endif %}
                 {% endif %}
             {% endif %}
         </div>
@@ -229,7 +231,7 @@
                 .then(data => {
                     alert(data.message);
                     if (data.message === 'Order deleted successfully') {
-                        location.reload(); // Refresh page to update table
+                        location.reload();
                     }
                 })
                 .catch(error => {
