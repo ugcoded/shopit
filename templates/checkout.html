@@ -46,5 +46,25 @@
             <p>© 2025 Elite Shop. All rights reserved.</p>
         </div>
     </footer>
+
+    <script>
+        // Footer visibility logic
+        function toggleFooter() {
+            const footer = document.querySelector('footer');
+            const bodyHeight = document.body.scrollHeight;
+            const viewportHeight = window.innerHeight;
+            const scrollPosition = window.scrollY + viewportHeight;
+
+            if (bodyHeight <= viewportHeight) {
+                footer.style.display = 'none'; // Hide if content fits viewport
+            } else {
+                footer.style.display = (scrollPosition >= bodyHeight - 10) ? 'block' : 'none'; // Show near bottom
+            }
+        }
+
+        window.addEventListener('load', toggleFooter);
+        window.addEventListener('scroll', toggleFooter);
+        window.addEventListener('resize', toggleFooter);
+    </script>
 </body>
 </html>
