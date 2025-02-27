@@ -34,6 +34,7 @@ header .container {
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    gap: 0.5rem; /* Added gap for spacing */
 }
 
 .logo {
@@ -48,7 +49,7 @@ header .container {
     display: flex;
     flex: 1;
     max-width: 400px;
-    margin: 0.5rem 1rem;
+    margin: 0.5rem 0;
     width: 100%;
 }
 
@@ -81,12 +82,13 @@ nav {
     align-items: center;
     flex-wrap: wrap;
     margin-top: 0.5rem;
+    gap: 0.5rem; /* Added gap for spacing */
 }
 
 nav a {
     text-decoration: none;
     color: #fff;
-    margin: 0.5rem 1rem 0 0;
+    margin: 0 1rem 0 0;
     font-weight: 400;
     font-size: clamp(0.9rem, 2.5vw, 1rem);
     transition: color 0.3s, transform 0.3s;
@@ -526,11 +528,12 @@ footer {
     gap: 1rem;
 }
 
-/* Media Queries for Small Screens (≤ 768px) */
+/* Media Queries for Mobile Screens (≤ 768px) */
 @media (max-width: 768px) {
     header .container {
         flex-direction: column;
         align-items: flex-start;
+        padding: 0.5rem 0; /* Reduced padding */
     }
 
     .search-form {
@@ -541,6 +544,7 @@ footer {
     nav {
         justify-content: center;
         width: 100%;
+        gap: 0.75rem; /* Increased gap */
     }
 
     .products {
@@ -549,15 +553,18 @@ footer {
 
     .stats-container {
         grid-template-columns: 1fr;
+        gap: 1.5rem; /* Increased gap */
     }
 
     .admin-form input, .admin-form button {
         font-size: 0.9rem;
+        padding: 0.6rem; /* Slightly reduced padding */
     }
 
     .product-item {
         flex-direction: column;
         align-items: flex-start;
+        gap: 0.75rem; /* Increased gap */
     }
 
     .edit-form {
@@ -566,21 +573,27 @@ footer {
 
     .cart-total, .checkout-btn {
         text-align: center;
+        margin: 1rem auto; /* Centered with spacing */
     }
 
     .dashboard-toggle {
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.75rem; /* Increased gap */
     }
 
     /* Vertical Table Layout for Mobile */
+    .order-table-container {
+        overflow-x: hidden; /* Remove horizontal scroll */
+    }
+
     .order-table {
         display: block;
-        min-width: 100%; /* Full width on mobile */
+        width: 100%;
+        min-width: 0; /* Remove min-width to fit screen */
     }
 
     .order-table thead {
-        display: none; /* Hide headers on mobile */
+        display: none;
     }
 
     .order-table tbody, .order-table tr, .order-table td {
@@ -589,34 +602,49 @@ footer {
     }
 
     .order-table tr {
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem; /* Increased spacing between rows */
         border-bottom: 2px solid #ddd;
-        padding-bottom: 0.5rem;
+        padding-bottom: 0.75rem;
     }
 
     .order-table td {
-        padding: 0.5rem 1rem;
+        padding: 0.75rem 1rem; /* Increased padding */
         position: relative;
         text-align: right;
+        min-height: 2.5rem; /* Ensure enough height to avoid overlap */
+        overflow-wrap: break-word; /* Prevent text overflow */
+        padding-left: 45%; /* Space for label */
     }
 
     .order-table td::before {
-        content: attr(data-label); /* Use data-label for column name */
+        content: attr(data-label);
         position: absolute;
         left: 1rem;
+        top: 50%;
+        transform: translateY(-50%); /* Center vertically */
         font-weight: 700;
         color: #2c3e50;
         text-align: left;
-        width: 40%; /* Adjust as needed */
+        width: 40%;
+        white-space: nowrap; /* Prevent label wrap */
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .order-table td select, .order-table td button {
         width: 100%;
         margin-top: 0.5rem;
+        padding: 0.5rem; /* Consistent padding */
     }
 
     .order-table td .status-form {
         display: block;
+        margin-top: 0.5rem;
+    }
+
+    .order-table td .remove-btn {
+        margin-left: 0; /* Reset inline margin */
+        margin-top: 0.5rem;
     }
 }
 
