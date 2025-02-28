@@ -54,9 +54,16 @@
                         <p class="message" role="alert">{{ error }}</p>
                     {% endif %}
                     <form method="POST" role="form">
-                        <input type="text" name="username" placeholder="Username" required aria-label="Admin username">
-                        <input type="password" name="password" placeholder="Enter Admin Password" required aria-label="Admin password">
-                        <button type="submit" class="btn" aria-label="Login as admin">Login</button>
+                        {{ admin_login_form.hidden_tag() }}
+                        <div>
+                            {{ admin_login_form.username.label }}<br>
+                            {{ admin_login_form.username(size=32, placeholder="Username", aria_label="Admin username") }}
+                        </div>
+                        <div>
+                            {{ admin_login_form.password.label }}<br>
+                            {{ admin_login_form.password(size=32, placeholder="Enter Admin Password", aria_label="Admin password") }}
+                        </div>
+                        {{ admin_login_form.submit(class="btn", aria_label="Login as admin") }}
                     </form>
                 </div>
             {% else %}
