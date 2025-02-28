@@ -23,7 +23,7 @@
             </form>
             <nav role="navigation">
                 <a href="/" aria-label="Shop page">Shop</a>
-                <a href="/cart" aria-label="Cart page">Cart</a>
+                <a href="/cart" aria-label="Cart page">Cart <span id="cart-count">{{ cart_count }}</span></a>
                 <a href="{{ url_for('orders', role='seller') }}" aria-label="Orders page">Orders</a>
             </nav>
         </div>
@@ -76,19 +76,38 @@
         window.addEventListener('scroll', toggleFooter);
         window.addEventListener('resize', toggleFooter);
 
+        function updateCartCount() {
+            fetch('/cart/data')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('cart-count').textContent = data.cart_count;
+            })
+            .catch(error => console.error('Error updating cart count:', error));
+        }
+
         function addToCart(productId) {
             const quantity = document.getElementById(`quantity-${productId}`).value;
             fetch('/cart', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': '{{ csrf_token }}'
+                },
                 body: JSON.stringify({ product_id: productId, quantity: quantity })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
                 showModal('success', data.message);
+                updateCartCount();
             })
             .catch(error => {
-                showModal('error', 'Error adding to cart: ' + error);
+                console.error('Error:', error);
+                showModal('error', 'Error adding to cart: ' + error.message);
             });
         }
 
@@ -103,6 +122,9 @@
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
         }
+
+        // Initial cart count update
+        updateCartCount();
     </script>
 </body>
 </html>
