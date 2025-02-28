@@ -37,14 +37,14 @@ header .container {
 }
 
 .logo {
-    width: 50px; /* Fixed width for circular container */
-    height: 50px; /* Fixed height for circular container */
-    border-radius: 50%; /* Makes it circular */
+    width: clamp(40px, 10vw, 60px); /* Responsive size: 40px min, 10vw, 60px max */
+    height: clamp(40px, 10vw, 60px); /* Matches width for perfect circle */
+    border-radius: 50%; /* Circular shape */
     overflow: hidden; /* Crops content to circle */
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: clamp(1rem, 3vw, 1.5rem); /* Adjusted for smaller size */
+    font-size: clamp(0.8rem, 2.5vw, 1.2rem); /* Smaller text for fallback */
     font-weight: 700;
     color: #fff;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
@@ -53,9 +53,10 @@ header .container {
 }
 
 .logo img {
-    width: 100%; /* Fills the circular container */
-    height: 100%; /* Fills the circular container */
-    object-fit: cover; /* Ensures image fits without distortion */
+    width: 100%; /* Fills the entire container */
+    height: 100%; /* Fills the entire container */
+    object-fit: cover; /* Ensures image covers circle without distortion */
+    display: block; /* Removes any inline spacing */
 }
 
 .search-form {
@@ -608,16 +609,22 @@ footer p {
     gap: 1rem;
 }
 
-/* Media Queries for Mobile Screens (≤ 768px) */
+/* Media Queries for Small Screens (≤ 768px) */
 @media (max-width: 768px) {
     header .container {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center; /* Center items for better spacing */
         padding: 0.5rem 0;
+        gap: 0.75rem; /* Increased gap for clarity */
+    }
+
+    .logo {
+        margin-right: 0; /* Remove right margin on small screens */
+        margin-bottom: 0.5rem; /* Add bottom margin for spacing */
     }
 
     .search-form {
-        margin: 0.5rem 0;
+        margin: 0;
         max-width: 100%;
     }
 
