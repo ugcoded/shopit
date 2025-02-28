@@ -18,6 +18,7 @@
                 {% endif %}
             </h1>
             <form method="POST" action="/search" class="search-form" role="search">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="text" name="search" placeholder="Search products..." value="{{ search_query }}" class="search-input" aria-label="Search products">
                 <button type="submit" class="search-btn" aria-label="Submit search">Search</button>
             </form>
@@ -61,7 +62,7 @@
     <script>
         function toggleFooter() {
             const footer = document.querySelector('footer');
-            if (!footer) return; // Exit if footer not found
+            if (!footer) return;
             const bodyHeight = document.body.scrollHeight;
             const viewportHeight = window.innerHeight;
             const scrollPosition = window.scrollY + viewportHeight;
@@ -75,7 +76,7 @@
 
         function updateCartCount() {
             const cartCountElement = document.getElementById('cart-count');
-            if (!cartCountElement) return; // Exit if element not found
+            if (!cartCountElement) return;
             fetch('/cart/data')
                 .then(response => {
                     if (!response.ok) throw new Error('Failed to fetch cart data');
@@ -86,7 +87,7 @@
                 })
                 .catch(error => {
                     console.error('Error updating cart count:', error);
-                    cartCountElement.textContent = '0'; // Fallback
+                    cartCountElement.textContent = '0';
                 });
         }
 
@@ -141,7 +142,6 @@
             if (modal) modal.style.display = 'none';
         }
 
-        // Initial cart count update
         window.addEventListener('load', updateCartCount);
     </script>
 </body>
