@@ -199,7 +199,7 @@
                         </div>
 
                         <form method="POST" action="{{ url_for('logout', role='seller') }}" class="logout-form" role="form">
-                            {{ csrf_token() }} <!-- Add CSRF token for POST -->
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn remove-btn" aria-label="Logout">Logout</button>
                         </form>
                     </div>
@@ -232,7 +232,7 @@
                             </tbody>
                         </table>
                         <form method="POST" action="{{ url_for('logout', role='buyer') }}" class="logout-form" role="form">
-                            {{ csrf_token() }} <!-- Add CSRF token for POST -->
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn remove-btn" aria-label="Logout">Logout</button>
                         </form>
                     </div>
