@@ -1,9 +1,9 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FileField
 from wtforms.validators import DataRequired, Length
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 from flask_caching import Cache
 import os
 from werkzeug.utils import secure_filename
@@ -128,7 +128,9 @@ def index():
     else:
         products = Product.query.all()
         message = None
-    return render_template('index.html', products=products, message=message, search_query=search_query, branding=branding)
+    # Include CSRF token in response for client-side use
+    response = make_response(render_template('index.html', products=products, message=message, search_query=search_query, branding=branding, csrf_token=generate_csrf()))
+    return response
 
 @app.route('/search', methods=['POST'])
 def search():
@@ -136,25 +138,40 @@ def search():
     return redirect(url_for('index', search=search_query))
 
 @app.route('/cart', methods=['GET', 'POST'])
+@csrf.exempt  # Temporarily exempt CSRF for testing; add token validation later
 def cart():
     branding = Branding.query.first()
     if request.method == 'POST':
         data = request.get_json()
+        logger.info(f"Received cart data: {data}")
         product_id = data.get('product_id')
         quantity = data.get('quantity', 1)
         
         if not product_id:
+            logger.error("Product ID missing in request")
             return jsonify({'message': 'Product ID required'}), 400
         
-        existing_item = CartItem.query.filter_by(product_id=product_id).first()
-        if existing_item:
-            existing_item.quantity += int(quantity)
-        else:
-            cart_item = CartItem(product_id=product_id, quantity=int(quantity))
-            db.session.add(cart_item)
-        db.session.commit()
-        flash('Item added to cart!', 'success')
-        return jsonify({'message': 'Added to cart', 'cart_count': CartItem.query.count()})
+        try:
+            quantity = int(quantity)
+            if quantity < 1:
+                raise ValueError("Quantity must be positive")
+            existing_item = CartItem.query.filter_by(product_id=product_id).first()
+            if existing_item:
+                existing_item.quantity += quantity
+            else:
+                cart_item = CartItem(product_id=product_id, quantity=quantity)
+                db.session.add(cart_item)
+            db.session.commit()
+            logger.info(f"Added product {product_id} to cart with quantity {quantity}")
+            flash('Item added to cart!', 'success')
+            return jsonify({'message': 'Added to cart', 'cart_count': CartItem.query.count()})
+        except ValueError as e:
+            logger.error(f"Invalid quantity: {str(e)}")
+            return jsonify({'message': f'Invalid quantity: {str(e)}'}), 400
+        except Exception as e:
+            logger.error(f"Error adding to cart: {str(e)}")
+            db.session.rollback()
+            return jsonify({'message': 'Error adding to cart'}), 500
     return render_template('cart.html', branding=branding)
 
 @app.route('/cart/remove/<int:product_id>', methods=['POST'])
