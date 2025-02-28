@@ -134,7 +134,6 @@ def index():
         products = Product.query.all()
         message = None
     cart_count = CartItem.query.count()
-    # Pass CSRF token to template for search form
     return render_template('index.html', products=products, message=message, search_query=search_query, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
 
 @app.route('/search', methods=['POST'])
@@ -179,23 +178,31 @@ def cart():
             logger.error(f"Error adding to cart: {str(e)}")
             db.session.rollback()
             return jsonify({'message': 'Error adding to cart'}), 500
-    return render_template('cart.html', branding=branding, cart_count=cart_count)
+    return render_template('cart.html', branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
 
 @app.route('/cart/remove/<int:product_id>', methods=['POST'])
 def remove_from_cart(product_id):
     data = request.get_json()
+    if not data or 'quantity' not in data:
+        return jsonify({'message': 'Invalid request data'}), 400
+    
     quantity_to_remove = int(data.get('quantity', 1))
-    item = CartItem.query.filter_by(product_id=product_id).first()
-    if item:
-        if item.quantity <= quantity_to_remove:
-            db.session.delete(item)
-        else:
-            item.quantity -= quantity_to_remove
-        db.session.commit()
-        updated_count = CartItem.query.count()
-        flash(f'Removed {quantity_to_remove} item(s) from cart!', 'success')
-        return jsonify({'message': f'Removed {quantity_to_remove} item(s)', 'cart_count': updated_count})
-    return jsonify({'message': 'Item not found'}), 404
+    try:
+        item = CartItem.query.filter_by(product_id=product_id).first()
+        if item:
+            if item.quantity <= quantity_to_remove:
+                db.session.delete(item)
+            else:
+                item.quantity -= quantity_to_remove
+            db.session.commit()
+            updated_count = CartItem.query.count()
+            flash(f'Removed {quantity_to_remove} item(s) from cart!', 'success')
+            return jsonify({'message': f'Removed {quantity_to_remove} item(s)', 'cart_count': updated_count})
+        return jsonify({'message': 'Item not found'}), 404
+    except Exception as e:
+        logger.error(f"Error removing item from cart: {str(e)}")
+        db.session.rollback()
+        return jsonify({'message': 'Error removing item from cart'}), 500
 
 @app.route('/cart/data')
 def cart_data():
