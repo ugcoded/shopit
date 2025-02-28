@@ -39,17 +39,14 @@
             <div class="products">
                 {% for product in products %}
                 <div class="product">
-                    <div class="image-container">
+                    <div class="image-container" id="image-container-{{ product.id }}">
                         {% set image_list = product.images.split(',') %}
                         {% for image in image_list %}
                         <img src="{{ url_for('static', filename=image) }}" alt="{{ product.name }} image {{ loop.index }}" class="product-image" style="display: {{ 'block' if loop.index0 == 0 else 'none' }};">
                         {% endfor %}
                         {% if image_list|length > 1 %}
-                        <div class="image-bars">
-                            {% for image in image_list %}
-                            <span class="image-bar {% if loop.index0 == 0 %}active{% endif %}" onclick="showImage({{ product.id }}, {{ loop.index0 }})"></span>
-                            {% endfor %}
-                        </div>
+                        <button class="arrow left-arrow" onclick="swipeImage({{ product.id }}, -1)" aria-label="Previous image">&#9664;</button>
+                        <button class="arrow right-arrow" onclick="swipeImage({{ product.id }}, 1)" aria-label="Next image">&#9654;</button>
                         {% endif %}
                     </div>
                     <h3>{{ product.name }}</h3>
@@ -137,15 +134,15 @@
             });
         }
 
-        function showImage(productId, imageIndex) {
-            const productDiv = document.querySelector(`#quantity-${productId}`).closest('.product');
-            const images = productDiv.querySelectorAll('.product-image');
-            const bars = productDiv.querySelectorAll('.image-bar');
+        function swipeImage(productId, direction) {
+            const container = document.getElementById(`image-container-${productId}`);
+            const images = container.querySelectorAll('.product-image');
+            let currentIndex = Array.from(images).findIndex(img => img.style.display === 'block');
+            if (currentIndex === -1) currentIndex = 0; // Fallback to first image
+
+            const newIndex = (currentIndex + direction + images.length) % images.length;
             images.forEach((img, idx) => {
-                img.style.display = idx === imageIndex ? 'block' : 'none';
-            });
-            bars.forEach((bar, idx) => {
-                bar.classList.toggle('active', idx === imageIndex);
+                img.style.display = idx === newIndex ? 'block' : 'none';
             });
         }
 
@@ -166,10 +163,9 @@
             if (modal) modal.style.display = 'none';
         }
 
-        // Search input handling
         document.getElementById('search-input').addEventListener('input', function(e) {
             if (!e.target.value.trim()) {
-                window.location.href = '/'; // Reset to full product list when cleared
+                window.location.href = '/';
             }
         });
 
