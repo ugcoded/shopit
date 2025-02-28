@@ -1,4 +1,7 @@
 Flask==2.3.3
-Flask-SQLAlchemy==3.0.5  # Corrected to match import
+Flask-SQLAlchemy==3.0.5
 Werkzeug==2.3.7
-gunicorn==20.1.0  # Added for Render's WSGI server
+gunicorn==20.1.0
+Flask-WTF==1.2.1      # For forms and CSRF
+Flask-Caching==2.1.0  # For caching
+python-dotenv==1.0.1  # For .env file
