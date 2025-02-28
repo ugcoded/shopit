@@ -23,15 +23,15 @@
             </form>
             <nav role="navigation">
                 <a href="/" aria-label="Shop page">Shop</a>
-                <a href="/cart" aria-label="Cart page">Cart (<span id="cart-count">0</span>)</a>
-                <a href="/orders" aria-label="Orders page">Orders</a>
+                <a href="/cart" aria-label="Cart page">Cart</a>
+                <a href="{{ url_for('orders', role='seller') }}" aria-label="Orders page">Orders</a>
             </nav>
         </div>
     </header>
 
     <section class="products-section">
         <div class="container">
-            <h2>Welcome to {{ branding.site_name }}</h2>
+            <h2>Shop Our Collection</h2>
             {% if message %}
                 <p class="message" role="alert">{{ message }}</p>
             {% endif %}
@@ -42,8 +42,8 @@
                     <h3>{{ product.name }}</h3>
                     <p class="description">{{ product.description }}</p>
                     <p class="price">UGX {{ "%.2f"|format(product.price) }}</p>
-                    <input type="number" id="quantity-{{ product.id }}" value="1" min="1" class="quantity-input" aria-label="Quantity for {{ product.name }}">
-                    <button onclick="addToCart({{ product.id }})" class="btn" aria-label="Add {{ product.name }} to cart">Add to Cart</button>
+                    <input type="number" min="1" value="1" class="quantity-input" id="quantity-{{ product.id }}" aria-label="Quantity for {{ product.name }}">
+                    <button class="btn" onclick="addToCart({{ product.id }})" aria-label="Add {{ product.name }} to cart">Add to Cart</button>
                 </div>
                 {% endfor %}
             </div>
@@ -59,24 +59,6 @@
     {% include 'modal.html' %}
 
     <script>
-        function addToCart(productId) {
-            const quantity = document.getElementById(`quantity-${productId}`).value;
-            fetch('/cart', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({product_id: productId, quantity: quantity})
-            })
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('cart-count').textContent = data.cart_count;
-                showModal('success', data.message);
-            });
-        }
-
-        fetch('/cart/data')
-            .then(res => res.json())
-            .then(data => document.getElementById('cart-count').textContent = data.items.length);
-
         function toggleFooter() {
             const footer = document.querySelector('footer');
             const bodyHeight = document.body.scrollHeight;
@@ -93,6 +75,22 @@
         window.addEventListener('load', toggleFooter);
         window.addEventListener('scroll', toggleFooter);
         window.addEventListener('resize', toggleFooter);
+
+        function addToCart(productId) {
+            const quantity = document.getElementById(`quantity-${productId}`).value;
+            fetch('/cart', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ product_id: productId, quantity: quantity })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showModal('success', data.message);
+            })
+            .catch(error => {
+                showModal('error', 'Error adding to cart: ' + error);
+            });
+        }
 
         function showModal(type, message) {
             const modal = document.getElementById('modal');
