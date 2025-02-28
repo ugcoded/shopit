@@ -725,25 +725,27 @@ footer p {
     border-color: #34495e;
 }
 
+/* ... (Previous styles unchanged until .logout-form) */
+
 .logout-form {
     text-align: center;
     margin-top: 2rem;
 }
 
-.buyer-login h3, .admin-login h3 {
-    font-size: clamp(1.3rem, 3.5vw, 1.8rem);
-    color: #fff;
-    margin-bottom: 1.5rem;
-    text-align: center;
-    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+.logout-form button {
+    background: linear-gradient(45deg, #d32f2f, #e57373);
+    padding: 0.85rem 1.75rem;
+    width: 100%;
+    max-width: 250px;
+    margin: 0 auto;
+    display: block;
 }
 
-.buyer-login form, .admin-login form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
+.logout-form button:hover {
+    background: linear-gradient(45deg, #c62828, #d66060);
 }
 
+/* ... (Rest of styles unchanged) */
 /* Media Queries for Small Screens (≤ 768px) */
 @media (max-width: 768px) {
     header .container {
