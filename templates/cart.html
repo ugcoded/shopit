@@ -32,7 +32,19 @@
     <section class="cart-section">
         <div class="container">
             <h2>Your Cart</h2>
-            <div class="cart-items" id="cart-items"></div>
+            <div class="cart-items">
+                <table class="cart-table" id="cart-table">
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cart-table-body"></tbody>
+                </table>
+            </div>
             <p class="cart-total" id="cart-total">Total: UGX 0.00</p>
             <a href="/checkout" class="btn checkout-btn" aria-label="Proceed to checkout">Checkout</a>
         </div>
@@ -77,22 +89,25 @@
             fetch('/cart/data')
             .then(response => response.json())
             .then(data => {
-                const cartItems = document.getElementById('cart-items');
+                const cartTableBody = document.getElementById('cart-table-body');
                 const cartTotal = document.getElementById('cart-total');
-                cartItems.innerHTML = '';
+                cartTableBody.innerHTML = '';
                 if (data.items.length === 0) {
-                    cartItems.innerHTML = '<p class="message">Your cart is empty.</p>';
+                    cartTableBody.innerHTML = '<tr><td colspan="4" class="message">Your cart is empty.</td></tr>';
                 } else {
                     data.items.forEach(item => {
-                        const div = document.createElement('div');
-                        div.className = 'cart-item';
-                        div.innerHTML = `
-                            <h3>${item.name}</h3>
-                            <p class="price">UGX ${item.price.toFixed(2)}</p>
-                            <input type="number" min="1" value="${item.quantity}" class="quantity-input" id="quantity-${item.id}" aria-label="Quantity for ${item.name}">
-                            <button class="btn remove-btn" onclick="removeFromCart(${item.id})" aria-label="Remove ${item.name} from cart">Remove</button>
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td data-label="Product Name">${item.name}</td>
+                            <td data-label="Price" class="price">UGX ${item.price.toFixed(2)}</td>
+                            <td data-label="Quantity">
+                                <input type="number" min="1" value="${item.quantity}" class="quantity-input" id="quantity-${item.id}" aria-label="Quantity for ${item.name}">
+                            </td>
+                            <td data-label="Actions">
+                                <button class="btn remove-btn" onclick="removeFromCart(${item.id})" aria-label="Remove ${item.name} from cart">Remove</button>
+                            </td>
                         `;
-                        cartItems.appendChild(div);
+                        cartTableBody.appendChild(row);
                     });
                 }
                 cartTotal.textContent = `Total: UGX ${data.total.toFixed(2)}`;
