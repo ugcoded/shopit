@@ -17,13 +17,9 @@
                     {{ branding.site_name }}
                 {% endif %}
             </h1>
-            <form method="POST" action="/search" class="search-form" role="search">
-                <input type="text" name="search" placeholder="Search products..." class="search-input" aria-label="Search products">
-                <button type="submit" class="search-btn" aria-label="Submit search">Search</button>
-            </form>
             <nav role="navigation">
                 <a href="/" aria-label="Shop page">Shop</a>
-                <a href="/cart" aria-label="Cart page">Cart</a>
+                <a href="/cart" aria-label="Cart page">Cart <span id="cart-count">{{ cart_count }}</span></a>
                 <a href="{{ url_for('orders', role='seller') }}" aria-label="Orders page">Orders</a>
             </nav>
         </div>
@@ -31,7 +27,7 @@
 
     <section class="orders-section">
         <div class="main-container">
-            <h2>Admin Dashboard</h2>
+            <h2>Orders Dashboard</h2>
             <div class="dashboard-toggle">
                 <a href="{{ url_for('orders', role='buyer') }}" class="toggle-btn {% if role == 'buyer' %}active{% endif %}" aria-label="Buyer view">Buyer View</a>
                 <a href="{{ url_for('orders', role='seller') }}" class="toggle-btn {% if role == 'seller' %}active{% endif %}" aria-label="Seller view">Seller View</a>
@@ -39,13 +35,13 @@
 
             {% if role == 'buyer' and not buyer_phone %}
                 <div class="buyer-login">
-                    <h3>Buyer Login</h3>
+                    <h3>Track Your Orders</h3>
                     {% if error %}
                         <p class="message" role="alert">{{ error }}</p>
                     {% endif %}
                     <form method="POST" role="form">
-                        <input type="tel" name="buyer_phone" placeholder="Enter Your Phone Number" required pattern="[0-9]{10}" title="Enter a 10-digit phone number" aria-label="Phone number">
-                        <button type="submit" class="btn" aria-label="View orders">View Orders</button>
+                        <input type="tel" name="buyer_phone" placeholder="Enter Your Phone Number" required pattern="[0-9]{10}" title="Enter a 10-digit phone number" aria-label="Phone number" class="buyer-input">
+                        <button type="submit" class="btn buyer-submit" aria-label="View orders">View Orders</button>
                     </form>
                 </div>
             {% elif role == 'seller' and not admin_logged_in %}
@@ -292,6 +288,15 @@
         window.addEventListener('scroll', toggleFooter);
         window.addEventListener('resize', toggleFooter);
 
+        function updateCartCount() {
+            fetch('/cart/data')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('cart-count').textContent = data.cart_count;
+            })
+            .catch(error => console.error('Error updating cart count:', error));
+        }
+
         function showModal(type, message) {
             const modal = document.getElementById('modal');
             const modalContent = document.querySelector('.modal-content p');
@@ -321,6 +326,8 @@
                 document.querySelector('.menu-items').style.display = 'block';
             }
         }
+
+        window.addEventListener('load', updateCartCount);
     </script>
 </body>
 </html>
