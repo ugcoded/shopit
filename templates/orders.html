@@ -118,6 +118,7 @@
                                 <input type="text" name="product_description" placeholder="Description" required aria-label="Product description">
                                 <button type="submit" aria-label="Add product">Add Product</button>
                             </form>
+                            <button class="back-btn btn" onclick="toggleSection(null)" aria-label="Back to menu">Back to Menu</button>
                         </div>
 
                         <div id="manage-products" class="menu-section" style="display: none;">
@@ -138,6 +139,7 @@
                                 </div>
                                 {% endfor %}
                             </div>
+                            <button class="back-btn btn" onclick="toggleSection(null)" aria-label="Back to menu">Back to Menu</button>
                         </div>
 
                         <div id="your-orders" class="menu-section" style="display: none;">
@@ -193,6 +195,7 @@
                             {% else %}
                                 <p class="message" role="alert">No orders found.</p>
                             {% endif %}
+                            <button class="back-btn btn" onclick="toggleSection(null)" aria-label="Back to menu">Back to Menu</button>
                         </div>
 
                         <form method="POST" action="{{ url_for('logout', role='seller') }}" class="logout-form" role="form">
@@ -309,9 +312,13 @@
             sections.forEach(section => {
                 section.style.display = section.id === sectionId ? 'block' : 'none';
             });
-            // Hide menu on mobile after selection
-            if (window.innerWidth <= 768) {
+            // Hide menu on mobile after selection if showing a section
+            if (window.innerWidth <= 768 && sectionId) {
                 document.querySelector('.menu-items').style.display = 'none';
+            }
+            // Show menu when returning to main view (null)
+            if (!sectionId && window.innerWidth <= 768) {
+                document.querySelector('.menu-items').style.display = 'block';
             }
         }
     </script>
