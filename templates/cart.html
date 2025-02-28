@@ -23,7 +23,7 @@
             </form>
             <nav role="navigation">
                 <a href="/" aria-label="Shop page">Shop</a>
-                <a href="/cart" aria-label="Cart page">Cart</a>
+                <a href="/cart" aria-label="Cart page">Cart <span id="cart-count">{{ cart_count }}</span></a>
                 <a href="{{ url_for('orders', role='seller') }}" aria-label="Orders page">Orders</a>
             </nav>
         </div>
@@ -64,6 +64,15 @@
         window.addEventListener('scroll', toggleFooter);
         window.addEventListener('resize', toggleFooter);
 
+        function updateCartCount() {
+            fetch('/cart/data')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('cart-count').textContent = data.cart_count;
+            })
+            .catch(error => console.error('Error updating cart count:', error));
+        }
+
         function loadCart() {
             fetch('/cart/data')
             .then(response => response.json())
@@ -87,6 +96,7 @@
                     });
                 }
                 cartTotal.textContent = `Total: UGX ${data.total.toFixed(2)}`;
+                document.getElementById('cart-count').textContent = data.cart_count;
             })
             .catch(error => {
                 showModal('error', 'Error loading cart: ' + error);
