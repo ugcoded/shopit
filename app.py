@@ -9,6 +9,11 @@ import os
 from werkzeug.utils import secure_filename
 from sqlalchemy import func
 from dotenv import load_dotenv
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file (for local dev)
 load_dotenv()
@@ -76,25 +81,39 @@ class BrandingForm(FlaskForm):
     logo = FileField('Site Logo')
     submit = SubmitField('Update Branding')
 
-# Initialize database (runs on app startup)
+class AdminLoginForm(FlaskForm):  # New form for admin login
+    username = StringField('Username', validators=[DataRequired(), Length(min=4, max=50)])
+    password = PasswordField('Password', validators=[DataRequired(), Length(min=6, max=100)])
+    submit = SubmitField('Login')
+
+# Initialize database with error handling
 def init_db():
-    with app.app_context():
-        db.create_all()
-        if not Product.query.first():
-            products = [
-                Product(name="Classic Tee", price=19.99, image="images/tee.jpg", description="Comfortable cotton t-shirt"),
-                Product(name="Denim Jeans", price=49.99, image="images/jeans.jpg", description="Stylish blue jeans"),
-                Product(name="Leather Jacket", price=89.99, image="images/jacket.jpg", description="Premium leather jacket"),
-                Product(name="Sneakers", price=59.99, image="images/sneakers.jpg", description="Trendy casual shoes")
-            ]
-            db.session.bulk_save_objects(products)
-        if not Admin.query.first():
-            admin = Admin(username='admin', password='admin123')
-            db.session.add(admin)
-        if not Branding.query.first():
-            branding = Branding(site_name='Elite Shop')
-            db.session.add(branding)
-        db.session.commit()
+    try:
+        with app.app_context():
+            logger.info("Initializing database...")
+            db.create_all()
+            if not Product.query.first():
+                products = [
+                    Product(name="Classic Tee", price=19.99, image="images/tee.jpg", description="Comfortable cotton t-shirt"),
+                    Product(name="Denim Jeans", price=49.99, image="images/jeans.jpg", description="Stylish blue jeans"),
+                    Product(name="Leather Jacket", price=89.99, image="images/jacket.jpg", description="Premium leather jacket"),
+                    Product(name="Sneakers", price=59.99, image="images/sneakers.jpg", description="Trendy casual shoes")
+                ]
+                db.session.bulk_save_objects(products)
+                logger.info("Added default products")
+            if not Admin.query.first():
+                admin = Admin(username='admin', password='admin123')
+                db.session.add(admin)
+                logger.info("Added default admin: admin/admin123")
+            if not Branding.query.first():
+                branding = Branding(site_name='Elite Shop')
+                db.session.add(branding)
+                logger.info("Added default branding")
+            db.session.commit()
+            logger.info("Database initialization completed")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {str(e)}")
+        raise
 
 # Run init_db on app startup
 init_db()
@@ -208,6 +227,7 @@ def checkout():
 def orders():
     branding = Branding.query.first()
     role = request.args.get('role', 'buyer')
+    admin_login_form = AdminLoginForm()  # Initialize form for seller login
     
     if role == 'buyer' and request.method == 'POST' and 'buyer_phone' in request.form:
         phone = request.form['buyer_phone']
@@ -218,28 +238,28 @@ def orders():
             flash('No orders found for this phone number.', 'error')
             return render_template('orders.html', role=role, error="No orders found for this phone number", branding=branding)
     
-    if role == 'seller' and request.method == 'POST' and 'password' in request.form:
-        username = request.form.get('username')
-        password = request.form.get('password')
-        print(f"Attempting login with username: {username}, password: {password}")
+    if role == 'seller' and request.method == 'POST' and admin_login_form.validate_on_submit():
+        username = admin_login_form.username.data
+        password = admin_login_form.password.data
+        logger.info(f"Attempting login with username: {username}, password: {password}")
         admin = Admin.query.filter_by(username=username).first()
         if admin:
-            print(f"Found admin: {admin.username}, stored password: {admin.password}")
+            logger.info(f"Found admin: {admin.username}, stored password: {admin.password}")
             if admin.password == password:
                 session['admin_logged_in'] = True
                 session['admin_username'] = username
                 flash('Admin logged in successfully!', 'success')
             else:
                 flash('Incorrect password.', 'error')
-                return render_template('orders.html', role=role, error="Incorrect password", branding=branding)
+                return render_template('orders.html', role=role, error="Incorrect password", admin_login_form=admin_login_form, branding=branding)
         else:
             flash('Username not found.', 'error')
-            return render_template('orders.html', role=role, error="Username not found", branding=branding)
+            return render_template('orders.html', role=role, error="Username not found", admin_login_form=admin_login_form, branding=branding)
     
     if role == 'buyer' and not session.get('buyer_phone'):
         return render_template('orders.html', role=role, branding=branding)
     if role == 'seller' and not session.get('admin_logged_in'):
-        return render_template('orders.html', role=role, branding=branding)
+        return render_template('orders.html', role=role, admin_login_form=admin_login_form, branding=branding)
     
     if role == 'buyer':
         buyer_phone = session.get('buyer_phone')
