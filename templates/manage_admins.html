@@ -17,14 +17,10 @@
                     {{ branding.site_name }}
                 {% endif %}
             </h1>
-            <form method="POST" action="/search" class="search-form" role="search">
-                <input type="text" name="search" placeholder="Search products..." class="search-input" aria-label="Search products">
-                <button type="submit" class="search-btn" aria-label="Submit search">Search</button>
-            </form>
             <nav role="navigation">
                 <a href="/" aria-label="Shop page">Shop</a>
-                <a href="/cart" aria-label="Cart page">Cart</a>
-                <a href="/orders?role=seller" aria-label="Orders page">Orders</a>
+                <a href="/cart" aria-label="Cart page">Cart <span id="cart-count">{{ cart_count }}</span></a>
+                <a href="{{ url_for('orders', role='seller') }}" aria-label="Orders page">Orders</a>
             </nav>
         </div>
     </header>
@@ -32,27 +28,33 @@
     <section class="orders-section">
         <div class="main-container">
             <h2>Manage Admins</h2>
-            <div class="admin-panel">
+            <div class="admin-login">
                 <h3>Add New Admin</h3>
-                <form method="POST" class="admin-form" role="form">
+                {% if error %}
+                    <p class="error" role="alert">{{ error }}</p>
+                {% endif %}
+                <form method="POST" role="form">
                     {{ form.hidden_tag() }}
-                    <div>
-                        {{ form.username.label }}<br>
-                        {{ form.username(size=32, aria_label="New admin username") }}
+                    <div class="form-group">
+                        <label for="{{ form.username.id }}">{{ form.username.label.text }}</label>
+                        {{ form.username(class="admin-input", placeholder="Enter Username", aria_label="Admin username") }}
                     </div>
-                    <div>
-                        {{ form.password.label }}<br>
-                        {{ form.password(size=32, aria_label="New admin password") }}
+                    <div class="form-group">
+                        <label for="{{ form.password.id }}">{{ form.password.label.text }}</label>
+                        {{ form.password(class="admin-input", placeholder="Enter Password", aria_label="Admin password") }}
                     </div>
-                    {{ form.submit(aria_label="Add new admin") }}
+                    {{ form.submit(class="btn admin-submit", aria_label="Add admin") }}
                 </form>
+            </div>
 
+            <div class="admin-panel">
                 <h3>Current Admins</h3>
                 <div class="products-list">
                     {% for admin in admins %}
                     <div class="product-item">
                         <p>{{ admin.username }}</p>
-                        <form method="POST" class="admin-form" role="form">
+                        <form method="POST" role="form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                             <input type="hidden" name="admin_id" value="{{ admin.id }}">
                             <input type="password" name="new_password" placeholder="New Password" required aria-label="New password for {{ admin.username }}">
                             <button type="submit" name="change_password" class="edit-btn" aria-label="Change password for {{ admin.username }}">Change Password</button>
@@ -75,32 +77,53 @@
     <script>
         function toggleFooter() {
             const footer = document.querySelector('footer');
+            if (!footer) return;
             const bodyHeight = document.body.scrollHeight;
             const viewportHeight = window.innerHeight;
             const scrollPosition = window.scrollY + viewportHeight;
 
-            if (bodyHeight <= viewportHeight) {
-                footer.style.display = 'none';
-            } else {
-                footer.style.display = (scrollPosition >= bodyHeight - 10) ? 'block' : 'none';
-            }
+            footer.style.display = (bodyHeight <= viewportHeight || scrollPosition < bodyHeight - 10) ? 'none' : 'block';
         }
 
         window.addEventListener('load', toggleFooter);
         window.addEventListener('scroll', toggleFooter);
         window.addEventListener('resize', toggleFooter);
 
+        function updateCartCount() {
+            const cartCountElement = document.getElementById('cart-count');
+            if (!cartCountElement) return;
+            fetch('/cart/data')
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to fetch cart data');
+                    return response.json();
+                })
+                .then(data => {
+                    cartCountElement.textContent = data.cart_count || 0;
+                })
+                .catch(error => {
+                    console.error('Error updating cart count:', error);
+                    cartCountElement.textContent = '0';
+                });
+        }
+
         function showModal(type, message) {
             const modal = document.getElementById('modal');
             const modalContent = document.querySelector('.modal-content p');
+            if (!modal || !modalContent) {
+                console.error('Modal elements not found.');
+                return;
+            }
             modal.className = `modal ${type}`;
             modalContent.textContent = message;
             modal.style.display = 'flex';
         }
 
         function closeModal() {
-            document.getElementById('modal').style.display = 'none';
+            const modal = document.getElementById('modal');
+            if (modal) modal.style.display = 'none';
         }
+
+        window.addEventListener('load', updateCartCount);
     </script>
 </body>
 </html>
