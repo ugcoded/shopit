@@ -37,11 +37,25 @@ header .container {
 }
 
 .logo {
-    font-size: clamp(1.2rem, 4vw, 1.8rem);
+    width: 50px; /* Fixed width for circular container */
+    height: 50px; /* Fixed height for circular container */
+    border-radius: 50%; /* Makes it circular */
+    overflow: hidden; /* Crops content to circle */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1rem, 3vw, 1.5rem); /* Adjusted for smaller size */
     font-weight: 700;
     color: #fff;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
     margin-right: 1rem;
+    background: rgba(255, 255, 255, 0.1); /* Slight background for text fallback */
+}
+
+.logo img {
+    width: 100%; /* Fills the circular container */
+    height: 100%; /* Fills the circular container */
+    object-fit: cover; /* Ensures image fits without distortion */
 }
 
 .search-form {
@@ -281,6 +295,67 @@ h3 {
     font-size: clamp(0.9rem, 2.5vw, 1rem);
 }
 
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    max-width: 90%;
+    width: 400px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.modal.success .modal-content {
+    border-top: 4px solid #27ae60;
+}
+
+.modal.error .modal-content {
+    border-top: 4px solid #e74c3c;
+}
+
+.modal-content p {
+    margin: 0 0 1rem;
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+}
+
+.modal-content button {
+    padding: 0.5rem 1rem;
+    background: linear-gradient(45deg, #2f2f2f, #1a1a1a);
+    color: #fff;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.modal-content button:hover {
+    background: linear-gradient(45deg, #1f1f1f, #0f0f0f);
+}
+
+/* Accessibility */
+:focus {
+    outline: 2px solid #ffd700;
+    outline-offset: 2px;
+}
+
+button, a, input, select {
+    transition: outline 0.2s ease;
+}
+
 footer {
     background: linear-gradient(90deg, rgba(47, 47, 47, 0.9), rgba(26, 26, 26, 0.9));
     color: white;
@@ -293,7 +368,7 @@ footer {
     width: 100%;
     z-index: 100;
     font-size: clamp(0.7rem, 2vw, 0.9rem);
-    display: none; /* Initially hidden, controlled by JS */
+    display: none;
 }
 
 footer p {
@@ -586,7 +661,6 @@ footer p {
         gap: 0.75rem;
     }
 
-    /* Vertical Table Layout for Mobile */
     .order-table-container {
         overflow-x: hidden;
     }
@@ -660,86 +734,3 @@ footer p {
         -webkit-overflow-scrolling: touch;
     }
 }
-/* Existing styles unchanged until footer section, only adding new styles below */
-
-/* Modal Styles */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-}
-
-.modal-content {
-    background: #fff;
-    padding: 1.5rem;
-    border-radius: 12px;
-    max-width: 90%;
-    width: 400px;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.modal.success .modal-content {
-    border-top: 4px solid #27ae60;
-}
-
-.modal.error .modal-content {
-    border-top: 4px solid #e74c3c;
-}
-
-.modal-content p {
-    margin: 0 0 1rem;
-    font-size: clamp(1rem, 2.5vw, 1.2rem);
-}
-
-.modal-content button {
-    padding: 0.5rem 1rem;
-    background: linear-gradient(45deg, #2f2f2f, #1a1a1a);
-    color: #fff;
-    border: none;
-    border-radius: 25px;
-    cursor: pointer;
-    font-weight: 700;
-}
-
-.modal-content button:hover {
-    background: linear-gradient(45deg, #1f1f1f, #0f0f0f);
-}
-
-/* Accessibility */
-:focus {
-    outline: 2px solid #ffd700;
-    outline-offset: 2px;
-}
-
-button, a, input, select {
-    transition: outline 0.2s ease;
-}
-
-footer {
-    background: linear-gradient(90deg, rgba(47, 47, 47, 0.9), rgba(26, 26, 26, 0.9));
-    color: white;
-    padding: 0.5rem 0;
-    text-align: center;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    z-index: 100;
-    font-size: clamp(0.7rem, 2vw, 0.9rem);
-    display: none; /* Initially hidden, controlled by JS */
-}
-
-footer p {
-    margin: 0;
-}
-
-/* Media Queries unchanged from previous version */
