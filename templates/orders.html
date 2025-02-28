@@ -199,6 +199,7 @@
                         </div>
 
                         <form method="POST" action="{{ url_for('logout', role='seller') }}" class="logout-form" role="form">
+                            {{ csrf_token() }} <!-- Add CSRF token for POST -->
                             <button type="submit" class="btn remove-btn" aria-label="Logout">Logout</button>
                         </form>
                     </div>
@@ -231,6 +232,7 @@
                             </tbody>
                         </table>
                         <form method="POST" action="{{ url_for('logout', role='buyer') }}" class="logout-form" role="form">
+                            {{ csrf_token() }} <!-- Add CSRF token for POST -->
                             <button type="submit" class="btn remove-btn" aria-label="Logout">Logout</button>
                         </form>
                     </div>
@@ -301,7 +303,6 @@
             document.getElementById('modal').style.display = 'none';
         }
 
-        // Menu toggle functionality
         document.querySelector('.menu-toggle').addEventListener('click', function() {
             const menuItems = document.querySelector('.menu-items');
             menuItems.style.display = menuItems.style.display === 'block' ? 'none' : 'block';
@@ -312,11 +313,9 @@
             sections.forEach(section => {
                 section.style.display = section.id === sectionId ? 'block' : 'none';
             });
-            // Hide menu on mobile after selection if showing a section
             if (window.innerWidth <= 768 && sectionId) {
                 document.querySelector('.menu-items').style.display = 'none';
             }
-            // Show menu when returning to main view (null)
             if (!sectionId && window.innerWidth <= 768) {
                 document.querySelector('.menu-items').style.display = 'block';
             }
