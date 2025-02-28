@@ -3,21 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - Elite Shop</title>
+    <title>Checkout - {{ branding.site_name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
         <div class="container">
-            <h1 class="logo">Elite Shop</h1>
-            <form method="POST" action="/search" class="search-form">
-                <input type="text" name="search" placeholder="Search products..." class="search-input">
-                <button type="submit" class="search-btn">Search</button>
+            <h1 class="logo">
+                {% if branding.logo_path %}
+                    <img src="{{ url_for('static', filename=branding.logo_path) }}" alt="{{ branding.site_name }}" style="max-height: 40px; vertical-align: middle;">
+                {% else %}
+                    {{ branding.site_name }}
+                {% endif %}
+            </h1>
+            <form method="POST" action="/search" class="search-form" role="search">
+                <input type="text" name="search" placeholder="Search products..." class="search-input" aria-label="Search products">
+                <button type="submit" class="search-btn" aria-label="Submit search">Search</button>
             </form>
-            <nav>
-                <a href="/">Shop</a>
-                <a href="/cart">Cart</a>
+            <nav role="navigation">
+                <a href="/" aria-label="Shop page">Shop</a>
+                <a href="/cart" aria-label="Cart page">Cart</a>
             </nav>
         </div>
     </header>
@@ -26,29 +32,30 @@
         <div class="container">
             <h2>Checkout</h2>
             {% if error %}
-                <p class="error">{{ error }}</p>
+                <p class="error" role="alert">{{ error }}</p>
             {% endif %}
             {% if success %}
-                <p class="success">{{ success }}</p>
-                <a href="/" class="btn">Continue Shopping</a>
+                <p class="success" role="alert">{{ success }}</p>
+                <a href="/" class="btn" aria-label="Continue shopping">Continue Shopping</a>
             {% else %}
-            <form method="POST" class="checkout-form">
-                <input type="text" name="name" placeholder="Full Name" required>
-                <input type="tel" name="phone" placeholder="Phone Number" required pattern="[0-9]{10}" title="Enter a 10-digit phone number">
-                <button type="submit" class="btn">Place Order</button>
+            <form method="POST" class="checkout-form" role="form">
+                <input type="text" name="name" placeholder="Full Name" required aria-label="Full name">
+                <input type="tel" name="phone" placeholder="Phone Number" required pattern="[0-9]{10}" title="Enter a 10-digit phone number" aria-label="Phone number">
+                <button type="submit" class="btn" aria-label="Place order">Place Order</button>
             </form>
             {% endif %}
         </div>
     </section>
 
-    <footer>
+    <footer role="contentinfo">
         <div class="container">
-            <p>© 2025 Elite Shop. All rights reserved.</p>
+            <p>© 2025 {{ branding.site_name }}. All rights reserved.</p>
         </div>
     </footer>
 
+    {% include 'modal.html' %}
+
     <script>
-        // Footer visibility logic
         function toggleFooter() {
             const footer = document.querySelector('footer');
             const bodyHeight = document.body.scrollHeight;
@@ -56,15 +63,27 @@
             const scrollPosition = window.scrollY + viewportHeight;
 
             if (bodyHeight <= viewportHeight) {
-                footer.style.display = 'none'; // Hide if content fits viewport
+                footer.style.display = 'none';
             } else {
-                footer.style.display = (scrollPosition >= bodyHeight - 10) ? 'block' : 'none'; // Show near bottom
+                footer.style.display = (scrollPosition >= bodyHeight - 10) ? 'block' : 'none';
             }
         }
 
         window.addEventListener('load', toggleFooter);
         window.addEventListener('scroll', toggleFooter);
         window.addEventListener('resize', toggleFooter);
+
+        function showModal(type, message) {
+            const modal = document.getElementById('modal');
+            const modalContent = document.querySelector('.modal-content p');
+            modal.className = `modal ${type}`;
+            modalContent.textContent = message;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
     </script>
 </body>
 </html>
