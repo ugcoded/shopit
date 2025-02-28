@@ -81,6 +81,11 @@ class AdminLoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6, max=100)])
     submit = SubmitField('Login')
 
+class CheckoutForm(FlaskForm):
+    name = StringField('Full Name', validators=[DataRequired(), Length(max=100)])
+    phone = StringField('Phone Number', validators=[DataRequired(), Length(min=10, max=20)])
+    submit = SubmitField('Place Order')
+
 def init_db():
     try:
         with app.app_context():
@@ -128,8 +133,8 @@ def index():
     else:
         products = Product.query.all()
         message = None
-    # Include CSRF token in response for client-side use
-    response = make_response(render_template('index.html', products=products, message=message, search_query=search_query, branding=branding, csrf_token=generate_csrf()))
+    cart_count = CartItem.query.count()
+    response = make_response(render_template('index.html', products=products, message=message, search_query=search_query, branding=branding, cart_count=cart_count, csrf_token=generate_csrf()))
     return response
 
 @app.route('/search', methods=['POST'])
@@ -138,9 +143,10 @@ def search():
     return redirect(url_for('index', search=search_query))
 
 @app.route('/cart', methods=['GET', 'POST'])
-@csrf.exempt  # Temporarily exempt CSRF for testing; add token validation later
+@csrf.exempt  # Temporary exemption; secure with token in production
 def cart():
     branding = Branding.query.first()
+    cart_count = CartItem.query.count()
     if request.method == 'POST':
         data = request.get_json()
         logger.info(f"Received cart data: {data}")
@@ -162,9 +168,10 @@ def cart():
                 cart_item = CartItem(product_id=product_id, quantity=quantity)
                 db.session.add(cart_item)
             db.session.commit()
+            updated_count = CartItem.query.count()
             logger.info(f"Added product {product_id} to cart with quantity {quantity}")
             flash('Item added to cart!', 'success')
-            return jsonify({'message': 'Added to cart', 'cart_count': CartItem.query.count()})
+            return jsonify({'message': 'Added to cart', 'cart_count': updated_count})
         except ValueError as e:
             logger.error(f"Invalid quantity: {str(e)}")
             return jsonify({'message': f'Invalid quantity: {str(e)}'}), 400
@@ -172,7 +179,7 @@ def cart():
             logger.error(f"Error adding to cart: {str(e)}")
             db.session.rollback()
             return jsonify({'message': 'Error adding to cart'}), 500
-    return render_template('cart.html', branding=branding)
+    return render_template('cart.html', branding=branding, cart_count=cart_count)
 
 @app.route('/cart/remove/<int:product_id>', methods=['POST'])
 def remove_from_cart(product_id):
@@ -185,8 +192,9 @@ def remove_from_cart(product_id):
         else:
             item.quantity -= quantity_to_remove
         db.session.commit()
+        updated_count = CartItem.query.count()
         flash(f'Removed {quantity_to_remove} item(s) from cart!', 'success')
-        return jsonify({'message': f'Removed {quantity_to_remove} item(s)', 'cart_count': CartItem.query.count()})
+        return jsonify({'message': f'Removed {quantity_to_remove} item(s)', 'cart_count': updated_count})
     return jsonify({'message': 'Item not found'}), 404
 
 @app.route('/cart/data')
@@ -204,40 +212,41 @@ def cart_data():
             'quantity': quantity
         })
         total += product.price * quantity
-    return jsonify({'items': cart, 'total': total})
+    return jsonify({'items': cart, 'total': total, 'cart_count': CartItem.query.count()})
 
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
     branding = Branding.query.first()
-    if request.method == 'POST':
-        data = request.form
+    form = CheckoutForm()
+    cart_count = CartItem.query.count()
+    if request.method == 'POST' and form.validate_on_submit():
         items = CartItem.query.all()
-        
         if not items:
             flash('Cart is empty!', 'error')
-            return render_template('checkout.html', error="Cart is empty", branding=branding)
-            
+            return render_template('checkout.html', form=form, error="Cart is empty", branding=branding, cart_count=cart_count)
+        
         for item in items:
             order = Order(
                 product_id=item.product_id,
                 quantity=item.quantity,
-                customer_name=data['name'],
-                customer_phone=data['phone'],
+                customer_name=form.name.data,
+                customer_phone=form.phone.data,
                 status='Pending'
             )
             db.session.add(order)
             db.session.delete(item)
         db.session.commit()
-        session['buyer_phone'] = data['phone']
-        flash(f'Order placed successfully! Use your phone number ({data["phone"]}) to track your order.', 'success')
-        return render_template('checkout.html', success=f"Order placed successfully! Use your phone number ({data['phone']}) to track your order.", branding=branding)
-    return render_template('checkout.html', branding=branding)
+        session['buyer_phone'] = form.phone.data
+        flash(f'Order placed successfully! Use your phone number ({form.phone.data}) to track your order.', 'success')
+        return redirect(url_for('orders', role='buyer'))
+    return render_template('checkout.html', form=form, branding=branding, cart_count=cart_count)
 
 @app.route('/orders', methods=['GET', 'POST'])
 def orders():
     branding = Branding.query.first()
     role = request.args.get('role', 'buyer')
     admin_login_form = AdminLoginForm()
+    cart_count = CartItem.query.count()
     
     if role == 'buyer' and request.method == 'POST' and 'buyer_phone' in request.form:
         phone = request.form['buyer_phone']
@@ -246,7 +255,7 @@ def orders():
             flash('Logged in successfully!', 'success')
         else:
             flash('No orders found for this phone number.', 'error')
-            return render_template('orders.html', role=role, error="No orders found for this phone number", branding=branding)
+            return render_template('orders.html', role=role, error="No orders found for this phone number", branding=branding, cart_count=cart_count)
     
     if role == 'seller' and request.method == 'POST' and admin_login_form.validate_on_submit():
         username = admin_login_form.username.data
@@ -261,15 +270,15 @@ def orders():
                 flash('Admin logged in successfully!', 'success')
             else:
                 flash('Incorrect password.', 'error')
-                return render_template('orders.html', role=role, error="Incorrect password", admin_login_form=admin_login_form, branding=branding)
+                return render_template('orders.html', role=role, error="Incorrect password", admin_login_form=admin_login_form, branding=branding, cart_count=cart_count)
         else:
             flash('Username not found.', 'error')
-            return render_template('orders.html', role=role, error="Username not found", admin_login_form=admin_login_form, branding=branding)
+            return render_template('orders.html', role=role, error="Username not found", admin_login_form=admin_login_form, branding=branding, cart_count=cart_count)
     
     if role == 'buyer' and not session.get('buyer_phone'):
-        return render_template('orders.html', role=role, branding=branding)
+        return render_template('orders.html', role=role, branding=branding, cart_count=cart_count)
     if role == 'seller' and not session.get('admin_logged_in'):
-        return render_template('orders.html', role=role, admin_login_form=admin_login_form, branding=branding)
+        return render_template('orders.html', role=role, admin_login_form=admin_login_form, branding=branding, cart_count=cart_count)
     
     if role == 'buyer':
         buyer_phone = session.get('buyer_phone')
@@ -334,7 +343,7 @@ def orders():
             else:
                 flash('Invalid image file.', 'error')
                 return render_template('orders.html', role=role, dashboard_data=dashboard_data, 
-                                     products=products, admin_logged_in=True, error="Invalid image file", branding=branding)
+                                     products=products, admin_logged_in=True, error="Invalid image file", branding=branding, cart_count=cart_count)
         
         if request.method == 'POST' and 'edit_product_id' in request.form:
             product_id = request.form['edit_product_id']
@@ -369,7 +378,7 @@ def orders():
     
     return render_template('orders.html', orders=order_list, role=role, dashboard_data=dashboard_data, 
                          admin_logged_in=session.get('admin_logged_in'), products=products if role == 'seller' else None,
-                         buyer_phone=session.get('buyer_phone') if role == 'buyer' else None, branding=branding)
+                         buyer_phone=session.get('buyer_phone') if role == 'buyer' else None, branding=branding, cart_count=cart_count)
 
 @app.route('/orders/delete/<int:product_id>/<customer_phone>', methods=['POST'])
 def delete_order(product_id, customer_phone):
@@ -394,6 +403,7 @@ def manage_admins():
     
     branding = Branding.query.first()
     form = AdminForm()
+    cart_count = CartItem.query.count()
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
@@ -415,7 +425,7 @@ def manage_admins():
             db.session.commit()
             flash(f'Password for {admin.username} updated successfully!', 'success')
     
-    return render_template('manage_admins.html', form=form, admins=admins, branding=branding)
+    return render_template('manage_admins.html', form=form, admins=admins, branding=branding, cart_count=cart_count)
 
 @app.route('/branding', methods=['GET', 'POST'])
 def branding():
@@ -425,6 +435,7 @@ def branding():
     
     branding = Branding.query.first()
     form = BrandingForm(obj=branding)
+    cart_count = CartItem.query.count()
     if form.validate_on_submit():
         branding.site_name = form.site_name.data
         if form.logo.data and allowed_file(form.logo.data.filename):
@@ -435,7 +446,7 @@ def branding():
         flash('Branding updated successfully!', 'success')
         return redirect(url_for('orders', role='seller'))
     
-    return render_template('branding.html', form=form, branding=branding)
+    return render_template('branding.html', form=form, branding=branding, cart_count=cart_count)
 
 @app.route('/logout', methods=['POST'])
 def logout():
