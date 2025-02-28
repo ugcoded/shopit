@@ -57,15 +57,12 @@
     <script>
         function toggleFooter() {
             const footer = document.querySelector('footer');
+            if (!footer) return;
             const bodyHeight = document.body.scrollHeight;
             const viewportHeight = window.innerHeight;
             const scrollPosition = window.scrollY + viewportHeight;
 
-            if (bodyHeight <= viewportHeight) {
-                footer.style.display = 'none';
-            } else {
-                footer.style.display = (scrollPosition >= bodyHeight - 10) ? 'block' : 'none';
-            }
+            footer.style.display = (bodyHeight <= viewportHeight || scrollPosition < bodyHeight - 10) ? 'none' : 'block';
         }
 
         window.addEventListener('load', toggleFooter);
@@ -73,74 +70,118 @@
         window.addEventListener('resize', toggleFooter);
 
         function updateCartCount() {
+            const cartCountElement = document.getElementById('cart-count');
+            if (!cartCountElement) return;
             fetch('/cart/data')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('cart-count').textContent = data.cart_count;
-            })
-            .catch(error => console.error('Error updating cart count:', error));
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to fetch cart data');
+                    return response.json();
+                })
+                .then(data => {
+                    cartCountElement.textContent = data.cart_count || 0;
+                })
+                .catch(error => {
+                    console.error('Error updating cart count:', error);
+                    cartCountElement.textContent = '0';
+                });
         }
 
         function loadCart() {
+            const cartTableBody = document.getElementById('cart-table-body');
+            const cartTotal = document.getElementById('cart-total');
+            if (!cartTableBody || !cartTotal) {
+                showModal('error', 'Cart elements not found.');
+                return;
+            }
+
             fetch('/cart/data')
-            .then(response => response.json())
-            .then(data => {
-                const cartTableBody = document.getElementById('cart-table-body');
-                const cartTotal = document.getElementById('cart-total');
-                cartTableBody.innerHTML = '';
-                if (data.items.length === 0) {
-                    cartTableBody.innerHTML = '<tr><td colspan="4" class="message">Your cart is empty.</td></tr>';
-                } else {
-                    data.items.forEach(item => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td data-label="Product Name">${item.name}</td>
-                            <td data-label="Price" class="price">UGX ${item.price.toFixed(2)}</td>
-                            <td data-label="Quantity">
-                                <input type="number" min="1" value="${item.quantity}" class="quantity-input" id="quantity-${item.id}" aria-label="Quantity for ${item.name}">
-                            </td>
-                            <td data-label="Actions">
-                                <button class="btn remove-btn" onclick="removeFromCart(${item.id})" aria-label="Remove ${item.name} from cart">Remove</button>
-                            </td>
-                        `;
-                        cartTableBody.appendChild(row);
-                    });
-                }
-                cartTotal.textContent = `Total: UGX ${data.total.toFixed(2)}`;
-                document.getElementById('cart-count').textContent = data.cart_count;
-            })
-            .catch(error => {
-                showModal('error', 'Error loading cart: ' + error);
-            });
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to load cart');
+                    return response.json();
+                })
+                .then(data => {
+                    cartTableBody.innerHTML = '';
+                    if (!data.items || data.items.length === 0) {
+                        cartTableBody.innerHTML = '<tr><td colspan="4" class="message">Your cart is empty.</td></tr>';
+                    } else {
+                        data.items.forEach(item => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td data-label="Product Name">${item.name || 'Unknown'}</td>
+                                <td data-label="Price" class="price">UGX ${(item.price || 0).toFixed(2)}</td>
+                                <td data-label="Quantity">
+                                    <input type="number" min="1" value="${item.quantity || 1}" class="quantity-input" id="quantity-${item.id}" aria-label="Quantity for ${item.name || 'item'}">
+                                </td>
+                                <td data-label="Actions">
+                                    <button class="btn remove-btn" onclick="removeFromCart(${item.id})" aria-label="Remove ${item.name || 'item'} from cart">Remove</button>
+                                </td>
+                            `;
+                            cartTableBody.appendChild(row);
+                        });
+                    }
+                    cartTotal.textContent = `Total: UGX ${(data.total || 0).toFixed(2)}`;
+                    document.getElementById('cart-count').textContent = data.cart_count || 0;
+                })
+                .catch(error => {
+                    console.error('Error loading cart:', error);
+                    cartTableBody.innerHTML = '<tr><td colspan="4" class="message">Error loading cart.</td></tr>';
+                    cartTotal.textContent = 'Total: UGX 0.00';
+                });
         }
 
         function removeFromCart(productId) {
-            const quantity = document.getElementById(`quantity-${productId}`).value;
+            const quantityInput = document.getElementById(`quantity-${productId}`);
+            if (!quantityInput) {
+                showModal('error', 'Quantity input not found.');
+                return;
+            }
+            const quantity = quantityInput.value;
+            if (!quantity || isNaN(quantity) || quantity < 1) {
+                showModal('error', 'Invalid quantity.');
+                return;
+            }
+
             fetch(`/cart/remove/${productId}`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': '{{ csrf_token }}'  // Add CSRF token
+                },
                 body: JSON.stringify({ quantity: quantity })
             })
-            .then(response => response.json())
-            .then(data => {
-                showModal('success', data.message);
-                loadCart();
-            })
-            .catch(error => {
-                showModal('error', 'Error removing item: ' + error);
-            });
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`Server returned ${response.status}: ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    showModal('success', data.message || 'Item removed from cart!');
+                    loadCart();
+                })
+                .catch(error => {
+                    console.error('Error in removeFromCart:', error);
+                    showModal('error', 'Failed to remove item: ' + error.message);
+                });
         }
 
         function showModal(type, message) {
             const modal = document.getElementById('modal');
             const modalContent = document.querySelector('.modal-content p');
+            if (!modal || !modalContent) {
+                console.error('Modal elements not found.');
+                return;
+            }
             modal.className = `modal ${type}`;
             modalContent.textContent = message;
             modal.style.display = 'flex';
         }
 
         function closeModal() {
-            document.getElementById('modal').style.display = 'none';
+            const modal = document.getElementById('modal');
+            if (modal) modal.style.display = 'none';
         }
 
         window.addEventListener('load', loadCart);
