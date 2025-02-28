@@ -127,6 +127,11 @@
                                 <div class="product-item">
                                     <p>{{ product.name }} - UGX {{ "%.2f"|format(product.price) }}</p>
                                     <button onclick="showEditForm({{ product.id }})" class="edit-btn" aria-label="Edit {{ product.name }}">Edit</button>
+                                    <form method="POST" style="display: inline;" role="form">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                        <input type="hidden" name="delete_product_id" value="{{ product.id }}">
+                                        <button type="submit" class="btn remove-btn" aria-label="Delete {{ product.name }}" onclick="return confirm('Are you sure you want to delete {{ product.name }}?')">Delete</button>
+                                    </form>
                                     <form method="POST" id="edit-form-{{ product.id }}" class="edit-form" style="display: none;" enctype="multipart/form-data" role="form">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                                         <input type="hidden" name="edit_product_id" value="{{ product.id }}">
@@ -268,7 +273,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-Token': '{{ csrf_token }}'  // Add CSRF token
+                    'X-CSRF-Token': '{{ csrf_token }}'
                 }
             })
                 .then(response => {
