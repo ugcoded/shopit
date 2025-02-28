@@ -24,6 +24,7 @@
             <nav role="navigation">
                 <a href="/" aria-label="Shop page">Shop</a>
                 <a href="/cart" aria-label="Cart page">Cart</a>
+                <a href="{{ url_for('orders', role='seller') }}" aria-label="Orders page">Orders</a>
             </nav>
         </div>
     </header>
@@ -51,43 +52,43 @@
                 <div class="admin-login">
                     <h3>Admin Login</h3>
                     {% if error %}
-                        <p class="message" role="alert">{{ error }}</p>
+                        <p class="error" role="alert">{{ error }}</p>
                     {% endif %}
                     <form method="POST" role="form">
                         {{ admin_login_form.hidden_tag() }}
-                        <div>
-                            {{ admin_login_form.username.label }}<br>
-                            {{ admin_login_form.username(size=32, placeholder="Username", aria_label="Admin username") }}
+                        <div class="form-group">
+                            <label for="{{ admin_login_form.username.id }}">{{ admin_login_form.username.label.text }}</label>
+                            {{ admin_login_form.username(class="admin-input", placeholder="Enter Username", aria_label="Admin username") }}
                         </div>
-                        <div>
-                            {{ admin_login_form.password.label }}<br>
-                            {{ admin_login_form.password(size=32, placeholder="Enter Admin Password", aria_label="Admin password") }}
+                        <div class="form-group">
+                            <label for="{{ admin_login_form.password.id }}">{{ admin_login_form.password.label.text }}</label>
+                            {{ admin_login_form.password(class="admin-input", placeholder="Enter Password", aria_label="Admin password") }}
                         </div>
-                        {{ admin_login_form.submit(class="btn", aria_label="Login as admin") }}
+                        {{ admin_login_form.submit(class="btn admin-submit", aria_label="Login as admin") }}
                     </form>
                 </div>
             {% else %}
                 <div class="stats-container">
                     {% if role == 'buyer' %}
                         <div class="stat-card">
-                            <h3>Total Orders</h3>
+                            <h3>TOTAL ORDERS</h3>
                             <p>{{ dashboard_data.total_orders }}</p>
                         </div>
                         <div class="stat-card">
-                            <h3>Total Spent</h3>
+                            <h3>TOTAL SPENT</h3>
                             <p>UGX {{ "%.2f"|format(dashboard_data.total_spent) }}</p>
                         </div>
                     {% elif role == 'seller' %}
                         <div class="stat-card">
-                            <h3>Total Orders</h3>
+                            <h3>TOTAL ORDERS</h3>
                             <p>{{ dashboard_data.total_orders }}</p>
                         </div>
                         <div class="stat-card">
-                            <h3>Total Revenue</h3>
+                            <h3>TOTAL REVENUE</h3>
                             <p>UGX {{ "%.2f"|format(dashboard_data.total_revenue) }}</p>
                         </div>
                         <div class="stat-card">
-                            <h3>Total Products</h3>
+                            <h3>TOTAL PRODUCTS</h3>
                             <p>{{ dashboard_data.products_count }}</p>
                         </div>
                     {% endif %}
