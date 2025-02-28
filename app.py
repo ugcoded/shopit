@@ -123,7 +123,7 @@ def enforce_https():
         return redirect(request.url.replace('http://', 'https://'), code=301)
 
 @app.route('/', methods=['GET'])
-@cache.cached(timeout=60)
+@cache.cached(timeout=60, key_prefix='index_view')
 def index():
     search_query = request.args.get('search', '')
     branding = Branding.query.first()
@@ -345,6 +345,7 @@ def orders():
                 new_product = Product(name=name, price=price, images=image_path, description=description)
                 db.session.add(new_product)
                 db.session.commit()
+                cache.delete('index_view')  # Invalidate index cache
                 flash('Product added successfully!', 'success')
                 return redirect(url_for('orders', role='seller'))
             else:
@@ -366,6 +367,7 @@ def orders():
                         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                         product.images = f"{product.images},{filename}" if product.images else filename
                 db.session.commit()
+                cache.delete('index_view')  # Invalidate index cache
                 flash('Product updated successfully!', 'success')
             return redirect(url_for('orders', role='seller'))
         
