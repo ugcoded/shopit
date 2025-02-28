@@ -23,7 +23,8 @@
             </form>
             <nav role="navigation">
                 <a href="/" aria-label="Shop page">Shop</a>
-                <a href="/orders" aria-label="Orders page">Orders</a>
+                <a href="/cart" aria-label="Cart page">Cart</a>
+                <a href="{{ url_for('orders', role='seller') }}" aria-label="Orders page">Orders</a>
             </nav>
         </div>
     </header>
@@ -31,22 +32,9 @@
     <section class="cart-section">
         <div class="container">
             <h2>Your Cart</h2>
-            <div id="cart-items" class="cart-items">
-                <table id="cart-table" class="order-table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Price</th>
-                            <th>Quantity</th>
-                            <th>Total</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cart-table-body"></tbody>
-                </table>
-            </div>
-            <div class="cart-total">Total: UGX <span id="cart-total">0.00</span></div>
-            <a href="{{ url_for('checkout') }}" class="btn checkout-btn" id="checkout-btn" aria-label="Proceed to checkout">Proceed to Checkout</a>
+            <div class="cart-items" id="cart-items"></div>
+            <p class="cart-total" id="cart-total">Total: UGX 0.00</p>
+            <a href="/checkout" class="btn checkout-btn" aria-label="Proceed to checkout">Checkout</a>
         </div>
     </section>
 
@@ -59,50 +47,6 @@
     {% include 'modal.html' %}
 
     <script>
-        function updateCart() {
-            fetch('/cart/data')
-                .then(res => res.json())
-                .then(data => {
-                    const tbody = document.getElementById('cart-table-body');
-                    const checkoutBtn = document.getElementById('checkout-btn');
-                    if (data.items.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" class="message">Your cart is empty.</td></tr>';
-                        checkoutBtn.style.display = 'none';
-                    } else {
-                        tbody.innerHTML = data.items.map(item => `
-                            <tr>
-                                <td data-label="Product">${item.name}</td>
-                                <td data-label="Price">UGX ${item.price.toFixed(2)}</td>
-                                <td data-label="Quantity">
-                                    <input type="number" id="remove-quantity-${item.id}" value="1" min="1" max="${item.quantity}" class="quantity-input" aria-label="Remove quantity for ${item.name}">
-                                    (x${item.quantity})
-                                </td>
-                                <td data-label="Total" class="money">UGX ${(item.price * item.quantity).toFixed(2)}</td>
-                                <td data-label="Action"><button onclick="removeFromCart(${item.id})" class="btn remove-btn" aria-label="Remove ${item.name} from cart">Remove</button></td>
-                            </tr>
-                        `).join('');
-                        checkoutBtn.style.display = 'block';
-                    }
-                    document.getElementById('cart-total').textContent = data.total.toFixed(2);
-                });
-        }
-
-        function removeFromCart(productId) {
-            const quantity = document.getElementById(`remove-quantity-${productId}`).value;
-            fetch(`/cart/remove/${productId}`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({quantity: quantity})
-            })
-                .then(res => res.json())
-                .then(data => {
-                    updateCart();
-                    showModal('success', data.message);
-                });
-        }
-
-        updateCart();
-
         function toggleFooter() {
             const footer = document.querySelector('footer');
             const bodyHeight = document.body.scrollHeight;
@@ -120,6 +64,52 @@
         window.addEventListener('scroll', toggleFooter);
         window.addEventListener('resize', toggleFooter);
 
+        function loadCart() {
+            fetch('/cart/data')
+            .then(response => response.json())
+            .then(data => {
+                const cartItems = document.getElementById('cart-items');
+                const cartTotal = document.getElementById('cart-total');
+                cartItems.innerHTML = '';
+                if (data.items.length === 0) {
+                    cartItems.innerHTML = '<p class="message">Your cart is empty.</p>';
+                } else {
+                    data.items.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'cart-item';
+                        div.innerHTML = `
+                            <h3>${item.name}</h3>
+                            <p class="price">UGX ${item.price.toFixed(2)}</p>
+                            <input type="number" min="1" value="${item.quantity}" class="quantity-input" id="quantity-${item.id}" aria-label="Quantity for ${item.name}">
+                            <button class="btn remove-btn" onclick="removeFromCart(${item.id})" aria-label="Remove ${item.name} from cart">Remove</button>
+                        `;
+                        cartItems.appendChild(div);
+                    });
+                }
+                cartTotal.textContent = `Total: UGX ${data.total.toFixed(2)}`;
+            })
+            .catch(error => {
+                showModal('error', 'Error loading cart: ' + error);
+            });
+        }
+
+        function removeFromCart(productId) {
+            const quantity = document.getElementById(`quantity-${productId}`).value;
+            fetch(`/cart/remove/${productId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ quantity: quantity })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showModal('success', data.message);
+                loadCart();
+            })
+            .catch(error => {
+                showModal('error', 'Error removing item: ' + error);
+            });
+        }
+
         function showModal(type, message) {
             const modal = document.getElementById('modal');
             const modalContent = document.querySelector('.modal-content p');
@@ -131,6 +121,8 @@
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
         }
+
+        window.addEventListener('load', loadCart);
     </script>
 </body>
 </html>
