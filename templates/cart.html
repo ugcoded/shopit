@@ -17,10 +17,6 @@
                     {{ branding.site_name }}
                 {% endif %}
             </h1>
-            <form method="POST" action="/search" class="search-form" role="search">
-                <input type="text" name="search" placeholder="Search products..." class="search-input" aria-label="Search products">
-                <button type="submit" class="search-btn" aria-label="Submit search">Search</button>
-            </form>
             <nav role="navigation">
                 <a href="/" aria-label="Shop page">Shop</a>
                 <a href="/cart" aria-label="Cart page">Cart <span id="cart-count">{{ cart_count }}</span></a>
