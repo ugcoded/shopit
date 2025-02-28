@@ -20,6 +20,7 @@ body {
     padding: 0 20px;
 }
 
+/* Header */
 header {
     background: linear-gradient(90deg, rgba(28, 37, 38, 0.95), rgba(15, 20, 25, 0.95));
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -132,6 +133,7 @@ nav a:hover {
     transform: translateY(-2px);
 }
 
+/* Sections */
 .products-section, .cart-section, .checkout-section, .orders-section {
     padding: 2.5rem 0;
 }
@@ -154,6 +156,7 @@ h3 {
     font-weight: 800;
 }
 
+/* Products Grid */
 .products {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
@@ -215,6 +218,7 @@ h3 {
     background: #f9f9f9;
 }
 
+/* Buttons */
 .btn {
     display: inline-block;
     padding: 0.85rem 1.75rem;
@@ -268,6 +272,7 @@ h3 {
     background: linear-gradient(45deg, #546e7a, #78909c);
 }
 
+/* Cart */
 .cart-items {
     margin-bottom: 2rem;
     overflow-x: auto;
@@ -293,6 +298,7 @@ h3 {
     background: linear-gradient(45deg, #2e7d32, #43a047);
 }
 
+/* Forms */
 .checkout-form, .admin-login, .admin-form, .buyer-login {
     max-width: 480px;
     width: 100%;
@@ -343,6 +349,7 @@ h3 {
     font-size: clamp(0.9rem, 2.5vw, 1rem);
 }
 
+/* Modal Styles */
 .modal {
     display: none;
     position: fixed;
@@ -396,6 +403,7 @@ h3 {
     background: linear-gradient(45deg, #34495e, #4a6076);
 }
 
+/* Accessibility */
 :focus {
     outline: 2px solid #ffd700;
     outline-offset: 3px;
@@ -470,38 +478,42 @@ footer p {
 
 .stats-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+    gap: 2rem;
     margin-bottom: 3rem;
 }
 
 .stat-card {
-    background: rgba(255, 255, 255, 0.98);
-    padding: 1.5rem;
-    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 242, 245, 0.9)); /* Glassmorphism-inspired */
+    border-radius: 20px;
+    padding: 2rem;
     text-align: center;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    transition: transform 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1); /* Deeper shadow with inner glow */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    backdrop-filter: blur(8px); /* Subtle glass effect */
 }
 
 .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+    transform: translateY(-8px);
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.25), inset 0 0 15px rgba(255, 255, 255, 0.15);
 }
 
 .stat-card h3 {
-    font-size: clamp(1.3rem, 3vw, 1.8rem);
-    color: #1a2526;
-    margin-bottom: 0.75rem;
-    font-weight: 800;
+    font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+    color: #263238; /* Darker, professional tone */
+    margin-bottom: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px; /* Spacing for elegance */
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .stat-card p {
-    font-size: clamp(1.3rem, 3.5vw, 1.6rem);
-    color: #2ecc71;
+    font-size: clamp(1.5rem, 3.5vw, 2rem);
+    color: #ffd700; /* Gold for premium feel */
     font-weight: 600;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .admin-panel {
@@ -780,6 +792,18 @@ footer p {
     .stats-container {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+    }
+
+    .stat-card {
+        padding: 1.5rem;
+    }
+
+    .stat-card h3 {
+        font-size: clamp(1rem, 2vw, 1.4rem);
+    }
+
+    .stat-card p {
+        font-size: clamp(1.2rem, 3vw, 1.6rem);
     }
 
     .admin-form input, .admin-form button {
