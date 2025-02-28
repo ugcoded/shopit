@@ -38,7 +38,7 @@ class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     price = db.Column(db.Float, nullable=False)
-    images = db.Column(db.String(500), nullable=False)  # Comma-separated list of image paths
+    images = db.Column(db.String(500), nullable=False)  # Updated to images
     description = db.Column(db.String(200))
 
 class CartItem(db.Model):
@@ -90,6 +90,8 @@ def init_db():
     try:
         with app.app_context():
             logger.info("Initializing database...")
+            # Drop and recreate all tables to ensure new schema
+            db.drop_all()
             db.create_all()
             if not Product.query.first():
                 products = [
@@ -127,7 +129,7 @@ def index():
     search_query = request.args.get('search', '')
     branding = Branding.query.first()
     if search_query:
-        products = Product.query.filter(Product.name.ilike(f'%{search_query}%')).all()  # Search only by name
+        products = Product.query.filter(Product.name.ilike(f'%{search_query}%')).all()
         message = "No products found matching your search." if not products else None
     else:
         products = Product.query.all()
