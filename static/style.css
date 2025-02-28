@@ -13,6 +13,7 @@ body {
     font-size: 16px;
 }
 
+/* Container */
 .container {
     max-width: 1400px;
     width: 92%;
@@ -484,14 +485,14 @@ footer p {
 }
 
 .stat-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 242, 245, 0.9)); /* Glassmorphism-inspired */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 242, 245, 0.9));
     border-radius: 20px;
     padding: 2rem;
     text-align: center;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1); /* Deeper shadow with inner glow */
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.15);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    backdrop-filter: blur(8px); /* Subtle glass effect */
+    backdrop-filter: blur(8px);
 }
 
 .stat-card:hover {
@@ -501,19 +502,28 @@ footer p {
 
 .stat-card h3 {
     font-size: clamp(1.2rem, 2.5vw, 1.6rem);
-    color: #263238; /* Darker, professional tone */
+    color: #263238;
     margin-bottom: 1rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1.5px; /* Spacing for elegance */
+    letter-spacing: 1.5px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .stat-card p {
     font-size: clamp(1.5rem, 3.5vw, 2rem);
-    color: #ffd700; /* Gold for premium feel */
     font-weight: 600;
     text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Specific styling for Total Revenue to use green */
+.stat-card:nth-child(2) p {
+    color: #2ecc71; /* Green for Total Revenue */
+}
+
+/* Default color for other stat values (Total Orders, Total Products) */
+.stat-card:not(:nth-child(2)) p {
+    color: #ffd700; /* Gold for others */
 }
 
 .admin-panel {
