@@ -374,8 +374,6 @@ def orders():
                         new_image_path = f"images/{filename}"
                         logger.info(f"Updating product {product_id} with new image path: {new_image_path}, file saved at: {file_path}")
                         product.images = f"{product.images},{new_image_path}" if product.images else new_image_path
-                    else:
-                        logger.error("Invalid image file uploaded during update")
                 db.session.commit()
                 cache.delete('index_view')
                 flash('Product updated successfully!', 'success')
@@ -385,17 +383,45 @@ def orders():
             product_id = request.form['delete_product_id']
             product = Product.query.get(product_id)
             if product:
-                # Delete associated cart items and orders first due to foreign key constraints
                 CartItem.query.filter_by(product_id=product_id).delete()
                 Order.query.filter_by(product_id=product_id).delete()
                 db.session.delete(product)
                 db.session.commit()
-                cache.delete('index_view')  # Invalidate cache
+                cache.delete('index_view')
                 logger.info(f"Deleted product {product_id}")
                 flash('Product deleted successfully!', 'success')
             else:
                 logger.error(f"Product {product_id} not found for deletion")
                 flash('Product not found.', 'error')
+            return redirect(url_for('orders', role='seller'))
+        
+        if request.method == 'POST' and 'delete_image_product_id' in request.form:
+            product_id = request.form['delete_image_product_id']
+            image_to_delete = request.form['image_to_delete']
+            product = Product.query.get(product_id)
+            if product and image_to_delete:
+                images_list = product.images.split(',')
+                if image_to_delete in images_list:
+                    images_list.remove(image_to_delete)
+                    product.images = ','.join(images_list) if images_list else ''
+                    # Optionally delete the file from static/images if desired
+                    file_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(image_to_delete))
+                    if os.path.exists(file_path):
+                        try:
+                            os.remove(file_path)
+                            logger.info(f"Deleted image file: {file_path}")
+                        except Exception as e:
+                            logger.error(f"Failed to delete image file {file_path}: {str(e)}")
+                    db.session.commit()
+                    cache.delete('index_view')
+                    logger.info(f"Deleted image {image_to_delete} from product {product_id}")
+                    flash(f'Image {os.path.basename(image_to_delete)} deleted successfully!', 'success')
+                else:
+                    logger.error(f"Image {image_to_delete} not found in product {product_id}")
+                    flash('Image not found.', 'error')
+            else:
+                logger.error(f"Product {product_id} not found or no image specified for deletion")
+                flash('Product or image not found.', 'error')
             return redirect(url_for('orders', role='seller'))
         
         if request.method == 'POST' and 'update_status' in request.form:
