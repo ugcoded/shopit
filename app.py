@@ -134,8 +134,8 @@ def index():
         products = Product.query.all()
         message = None
     cart_count = CartItem.query.count()
-    response = make_response(render_template('index.html', products=products, message=message, search_query=search_query, branding=branding, cart_count=cart_count, csrf_token=generate_csrf()))
-    return response
+    # Pass CSRF token to template for search form
+    return render_template('index.html', products=products, message=message, search_query=search_query, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
 
 @app.route('/search', methods=['POST'])
 def search():
