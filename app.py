@@ -15,7 +15,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Load environment variables from .env file (for local dev)
 load_dotenv()
 
 app = Flask(__name__)
@@ -29,15 +28,12 @@ db = SQLAlchemy(app)
 csrf = CSRFProtect(app)
 cache = Cache(app)
 
-# Ensure SECRET_KEY is set
 if not app.secret_key:
     raise ValueError("SECRET_KEY must be set in environment variables")
 
-# File upload validation
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-# Database Models
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -70,7 +66,6 @@ class Branding(db.Model):
     logo_path = db.Column(db.String(100))
     site_name = db.Column(db.String(100), default='Elite Shop')
 
-# Forms
 class AdminForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=4, max=50)])
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6, max=100)])
@@ -81,12 +76,11 @@ class BrandingForm(FlaskForm):
     logo = FileField('Site Logo')
     submit = SubmitField('Update Branding')
 
-class AdminLoginForm(FlaskForm):  # New form for admin login
+class AdminLoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=4, max=50)])
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6, max=100)])
     submit = SubmitField('Login')
 
-# Initialize database with error handling
 def init_db():
     try:
         with app.app_context():
@@ -115,7 +109,6 @@ def init_db():
         logger.error(f"Failed to initialize database: {str(e)}")
         raise
 
-# Run init_db on app startup
 init_db()
 
 @app.before_request
@@ -227,7 +220,7 @@ def checkout():
 def orders():
     branding = Branding.query.first()
     role = request.args.get('role', 'buyer')
-    admin_login_form = AdminLoginForm()  # Initialize form for seller login
+    admin_login_form = AdminLoginForm()
     
     if role == 'buyer' and request.method == 'POST' and 'buyer_phone' in request.form:
         phone = request.form['buyer_phone']
@@ -429,14 +422,18 @@ def branding():
 
 @app.route('/logout', methods=['POST'])
 def logout():
+    logger.info(f"Logout requested. Current session: {session}")
     if session.get('admin_logged_in'):
         session.pop('admin_logged_in', None)
         session.pop('admin_username', None)
         flash('Logged out successfully!', 'success')
+        logger.info("Admin logged out successfully")
     elif session.get('buyer_phone'):
         session.pop('buyer_phone', None)
         flash('Logged out successfully!', 'success')
+        logger.info("Buyer logged out successfully")
     role = request.args.get('role', 'buyer')
+    logger.info(f"Redirecting to orders page with role: {role}")
     return redirect(url_for('orders', role=role))
 
 if __name__ == '__main__':
