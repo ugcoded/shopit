@@ -2,20 +2,20 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; /* Professional font stack */
+    font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 body {
     line-height: 1.7;
-    color: #e0e0e0; /* Softer white for text */
-    background: linear-gradient(135deg, #1c2526, #0f1419); /* Richer dark gradient */
+    color: #e0e0e0;
+    background: linear-gradient(135deg, #1c2526, #0f1419);
     min-height: 100vh;
-    font-size: 16px; /* Base font size for consistency */
+    font-size: 16px;
 }
 
 /* Container */
 .container {
-    max-width: 1400px; /* Slightly wider for modern screens */
+    max-width: 1400px;
     width: 92%;
     margin: 0 auto;
     padding: 0 20px;
@@ -24,12 +24,12 @@ body {
 /* Header */
 header {
     background: linear-gradient(90deg, rgba(28, 37, 38, 0.95), rgba(15, 20, 25, 0.95));
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* Deeper shadow */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     padding: 1.25rem 0;
     position: sticky;
     top: 0;
     z-index: 100;
-    backdrop-filter: blur(10px); /* Glassmorphism effect */
+    backdrop-filter: blur(10px);
 }
 
 header .container {
@@ -41,7 +41,7 @@ header .container {
 }
 
 .logo {
-    width: clamp(45px, 8vw, 70px); /* Slightly larger range */
+    width: clamp(45px, 8vw, 70px);
     height: clamp(45px, 8vw, 70px);
     border-radius: 50%;
     overflow: hidden;
@@ -54,7 +54,7 @@ header .container {
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
     margin-right: 1.5rem;
     background: radial-gradient(circle, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
-    border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
+    border: 1px solid rgba(255, 255, 255, 0.1);
     transition: transform 0.3s ease;
 }
 
@@ -514,7 +514,7 @@ footer p {
 }
 
 .admin-panel {
-    background: linear-gradient(135deg, #263238, #37474f); /* Subtle gradient */
+    background: linear-gradient(135deg, #263238, #37474f);
     padding: 2rem;
     border-radius: 20px;
     margin-bottom: 3rem;
@@ -547,7 +547,7 @@ footer p {
 }
 
 .menu-items {
-    display: none; /* Hidden by default on mobile */
+    display: none;
     list-style: none;
     padding: 0;
     margin: 0.5rem 0 0;
@@ -583,7 +583,7 @@ footer p {
 .menu-link:hover {
     background: rgba(52, 73, 94, 0.1);
     color: #34495e;
-    padding-left: 2rem; /* Subtle shift for hover effect */
+    padding-left: 2rem;
 }
 
 .menu-section {
@@ -725,8 +725,6 @@ footer p {
     border-color: #34495e;
 }
 
-/* ... (Previous styles unchanged until .logout-form) */
-
 .logout-form {
     text-align: center;
     margin-top: 2rem;
@@ -745,7 +743,20 @@ footer p {
     background: linear-gradient(45deg, #c62828, #d66060);
 }
 
-/* ... (Rest of styles unchanged) */
+.buyer-login h3, .admin-login h3 {
+    font-size: clamp(1.3rem, 3.5vw, 1.8rem);
+    color: #fff;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.buyer-login form, .admin-login form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
 /* Media Queries for Small Screens (≤ 768px) */
 @media (max-width: 768px) {
     header .container {
@@ -882,6 +893,10 @@ footer p {
 
     .menu-toggle {
         padding: 0.75rem 1.5rem;
+    }
+
+    .logout-form button {
+        max-width: 200px; /* Slightly smaller for mobile */
     }
 }
 
