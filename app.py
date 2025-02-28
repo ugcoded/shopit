@@ -134,6 +134,9 @@ def index():
         products = Product.query.all()
         message = None
     cart_count = CartItem.query.count()
+    # Log products and their images for debugging
+    for product in products:
+        logger.info(f"Product: {product.name}, Images: {product.images}")
     return render_template('index.html', products=products, message=message, search_query=search_query, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
 
 @app.route('/search', methods=['POST'])
@@ -340,15 +343,18 @@ def orders():
             file = request.files['product_image']
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
                 image_path = f"images/{filename}"
+                logger.info(f"Saving new product with image path: {image_path}, file saved at: {file_path}")
                 new_product = Product(name=name, price=price, images=image_path, description=description)
                 db.session.add(new_product)
                 db.session.commit()
-                cache.delete('index_view')  # Invalidate index cache
+                cache.delete('index_view')
                 flash('Product added successfully!', 'success')
                 return redirect(url_for('orders', role='seller'))
             else:
+                logger.error("Invalid or no image file uploaded")
                 flash('Invalid image file.', 'error')
                 return render_template('orders.html', role=role, dashboard_data=dashboard_data, 
                                      products=products, admin_logged_in=True, error="Invalid image file", branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
@@ -364,10 +370,15 @@ def orders():
                     file = request.files['edit_product_image']
                     if file and allowed_file(file.filename):
                         filename = secure_filename(file.filename)
-                        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                        product.images = f"{product.images},{filename}" if product.images else filename
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        file.save(file_path)
+                        new_image_path = f"images/{filename}"
+                        logger.info(f"Updating product {product_id} with new image path: {new_image_path}, file saved at: {file_path}")
+                        product.images = f"{product.images},{new_image_path}" if product.images else new_image_path
+                    else:
+                        logger.error("Invalid image file uploaded during update")
                 db.session.commit()
-                cache.delete('index_view')  # Invalidate index cache
+                cache.delete('index_view')
                 flash('Product updated successfully!', 'success')
             return redirect(url_for('orders', role='seller'))
         
