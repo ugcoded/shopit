@@ -248,40 +248,46 @@
 
     <script>
         function showEditForm(productId) {
-            document.querySelectorAll('.edit-form').forEach(form => form.style.display = 'none');
-            document.getElementById(`edit-form-${productId}`).style.display = 'block';
+            const editForms = document.querySelectorAll('.edit-form');
+            const targetForm = document.getElementById(`edit-form-${productId}`);
+            if (!targetForm) {
+                showModal('error', 'Edit form not found.');
+                return;
+            }
+            editForms.forEach(form => form.style.display = 'none');
+            targetForm.style.display = 'block';
         }
 
         function deleteOrder(productId, customerPhone) {
-            if (confirm('Are you sure you want to delete this order?')) {
-                fetch(`/orders/delete/${productId}/${customerPhone}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'}
+            if (!confirm('Are you sure you want to delete this order?')) return;
+            fetch(`/orders/delete/${productId}/${customerPhone}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to delete order');
+                    return response.json();
                 })
-                .then(res => res.json())
                 .then(data => {
-                    showModal('success', data.message);
+                    showModal('success', data.message || 'Order deleted successfully!');
                     if (data.message === 'Order deleted successfully') {
                         location.reload();
                     }
                 })
                 .catch(error => {
-                    showModal('error', 'Error deleting order: ' + error);
+                    console.error('Error in deleteOrder:', error);
+                    showModal('error', 'Failed to delete order. Please try again.');
                 });
-            }
         }
 
         function toggleFooter() {
             const footer = document.querySelector('footer');
+            if (!footer) return;
             const bodyHeight = document.body.scrollHeight;
             const viewportHeight = window.innerHeight;
             const scrollPosition = window.scrollY + viewportHeight;
 
-            if (bodyHeight <= viewportHeight) {
-                footer.style.display = 'none';
-            } else {
-                footer.style.display = (scrollPosition >= bodyHeight - 10) ? 'block' : 'none';
-            }
+            footer.style.display = (bodyHeight <= viewportHeight || scrollPosition < bodyHeight - 10) ? 'none' : 'block';
         }
 
         window.addEventListener('load', toggleFooter);
@@ -289,42 +295,65 @@
         window.addEventListener('resize', toggleFooter);
 
         function updateCartCount() {
+            const cartCountElement = document.getElementById('cart-count');
+            if (!cartCountElement) return;
             fetch('/cart/data')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('cart-count').textContent = data.cart_count;
-            })
-            .catch(error => console.error('Error updating cart count:', error));
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to fetch cart data');
+                    return response.json();
+                })
+                .then(data => {
+                    cartCountElement.textContent = data.cart_count || 0;
+                })
+                .catch(error => {
+                    console.error('Error updating cart count:', error);
+                    cartCountElement.textContent = '0';
+                });
         }
 
         function showModal(type, message) {
             const modal = document.getElementById('modal');
             const modalContent = document.querySelector('.modal-content p');
+            if (!modal || !modalContent) {
+                console.error('Modal elements not found.');
+                return;
+            }
             modal.className = `modal ${type}`;
             modalContent.textContent = message;
             modal.style.display = 'flex';
         }
 
         function closeModal() {
-            document.getElementById('modal').style.display = 'none';
+            const modal = document.getElementById('modal');
+            if (modal) modal.style.display = 'none';
         }
-
-        document.querySelector('.menu-toggle').addEventListener('click', function() {
-            const menuItems = document.querySelector('.menu-items');
-            menuItems.style.display = menuItems.style.display === 'block' ? 'none' : 'block';
-        });
 
         function toggleSection(sectionId) {
             const sections = document.querySelectorAll('.menu-section');
+            const menuItems = document.querySelector('.menu-items');
+            if (!sections.length || !menuItems) {
+                showModal('error', 'Menu elements not found.');
+                return;
+            }
             sections.forEach(section => {
                 section.style.display = section.id === sectionId ? 'block' : 'none';
             });
-            if (window.innerWidth <= 768 && sectionId) {
-                document.querySelector('.menu-items').style.display = 'none';
+            if (window.innerWidth <= 768) {
+                menuItems.style.display = sectionId ? 'none' : 'block';
             }
-            if (!sectionId && window.innerWidth <= 768) {
-                document.querySelector('.menu-items').style.display = 'block';
-            }
+        }
+
+        // Menu toggle click handler
+        const menuToggle = document.querySelector('.menu-toggle');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', function() {
+                const menuItems = document.querySelector('.menu-items');
+                if (!menuItems) {
+                    showModal('error', 'Menu items not found.');
+                    return;
+                }
+                menuItems.style.display = menuItems.style.display === 'block' ? 'none' : 'block';
+            });
         }
 
         window.addEventListener('load', updateCartCount);
