@@ -38,7 +38,7 @@ class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     price = db.Column(db.Float, nullable=False)
-    images = db.Column(db.String(500), nullable=False)  # Updated to images
+    images = db.Column(db.String(500), nullable=False)
     description = db.Column(db.String(200))
 
 class CartItem(db.Model):
@@ -90,7 +90,6 @@ def init_db():
     try:
         with app.app_context():
             logger.info("Initializing database...")
-            # Drop and recreate all tables to ensure new schema
             db.drop_all()
             db.create_all()
             if not Product.query.first():
@@ -263,7 +262,7 @@ def orders():
             flash('Logged in successfully!', 'success')
         else:
             flash('No orders found for this phone number.', 'error')
-            return render_template('orders.html', role=role, error="No orders found for this phone number", branding=branding, cart_count=cart_count)
+            return render_template('orders.html', role=role, error="No orders found for this phone number", branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
     
     if role == 'seller' and request.method == 'POST' and admin_login_form.validate_on_submit():
         username = admin_login_form.username.data
@@ -278,15 +277,15 @@ def orders():
                 flash('Admin logged in successfully!', 'success')
             else:
                 flash('Incorrect password.', 'error')
-                return render_template('orders.html', role=role, error="Incorrect password", admin_login_form=admin_login_form, branding=branding, cart_count=cart_count)
+                return render_template('orders.html', role=role, error="Incorrect password", admin_login_form=admin_login_form, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
         else:
             flash('Username not found.', 'error')
-            return render_template('orders.html', role=role, error="Username not found", admin_login_form=admin_login_form, branding=branding, cart_count=cart_count)
+            return render_template('orders.html', role=role, error="Username not found", admin_login_form=admin_login_form, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
     
     if role == 'buyer' and not session.get('buyer_phone'):
-        return render_template('orders.html', role=role, branding=branding, cart_count=cart_count)
+        return render_template('orders.html', role=role, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
     if role == 'seller' and not session.get('admin_logged_in'):
-        return render_template('orders.html', role=role, admin_login_form=admin_login_form, branding=branding, cart_count=cart_count)
+        return render_template('orders.html', role=role, admin_login_form=admin_login_form, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
     
     if role == 'buyer':
         buyer_phone = session.get('buyer_phone')
@@ -351,7 +350,7 @@ def orders():
             else:
                 flash('Invalid image file.', 'error')
                 return render_template('orders.html', role=role, dashboard_data=dashboard_data, 
-                                     products=products, admin_logged_in=True, error="Invalid image file", branding=branding, cart_count=cart_count)
+                                     products=products, admin_logged_in=True, error="Invalid image file", branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
         
         if request.method == 'POST' and 'edit_product_id' in request.form:
             product_id = request.form['edit_product_id']
@@ -386,7 +385,7 @@ def orders():
     
     return render_template('orders.html', orders=order_list, role=role, dashboard_data=dashboard_data, 
                          admin_logged_in=session.get('admin_logged_in'), products=products if role == 'seller' else None,
-                         buyer_phone=session.get('buyer_phone') if role == 'buyer' else None, branding=branding, cart_count=cart_count)
+                         buyer_phone=session.get('buyer_phone') if role == 'buyer' else None, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
 
 @app.route('/orders/delete/<int:product_id>/<customer_phone>', methods=['POST'])
 def delete_order(product_id, customer_phone):
@@ -433,7 +432,7 @@ def manage_admins():
             db.session.commit()
             flash(f'Password for {admin.username} updated successfully!', 'success')
     
-    return render_template('manage_admins.html', form=form, admins=admins, branding=branding, cart_count=cart_count)
+    return render_template('manage_admins.html', form=form, admins=admins, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
 
 @app.route('/branding', methods=['GET', 'POST'])
 def branding():
