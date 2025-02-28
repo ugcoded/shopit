@@ -23,7 +23,8 @@
             </form>
             <nav role="navigation">
                 <a href="/" aria-label="Shop page">Shop</a>
-                <a href="/cart" aria-label="Cart page">Cart</a>
+                <a href="/cart" aria-label="Cart page">Cart <span id="cart-count">{{ cart_count }}</span></a>
+                <a href="{{ url_for('orders', role='seller') }}" aria-label="Orders page">Orders</a>
             </nav>
         </div>
     </header>
@@ -36,13 +37,19 @@
             {% endif %}
             {% if success %}
                 <p class="success" role="alert">{{ success }}</p>
-                <a href="/" class="btn" aria-label="Continue shopping">Continue Shopping</a>
             {% else %}
-            <form method="POST" class="checkout-form" role="form">
-                <input type="text" name="name" placeholder="Full Name" required aria-label="Full name">
-                <input type="tel" name="phone" placeholder="Phone Number" required pattern="[0-9]{10}" title="Enter a 10-digit phone number" aria-label="Phone number">
-                <button type="submit" class="btn" aria-label="Place order">Place Order</button>
-            </form>
+                <form method="POST" class="checkout-form" role="form">
+                    {{ form.hidden_tag() }}
+                    <div class="form-group">
+                        <label for="{{ form.name.id }}">{{ form.name.label.text }}</label>
+                        {{ form.name(class="checkout-input", placeholder="Enter your full name", aria_label="Full name") }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.phone.id }}">{{ form.phone.label.text }}</label>
+                        {{ form.phone(class="checkout-input", placeholder="Enter your phone number", aria_label="Phone number") }}
+                    </div>
+                    {{ form.submit(class="btn checkout-submit", aria_label="Place order") }}
+                </form>
             {% endif %}
         </div>
     </section>
@@ -73,17 +80,16 @@
         window.addEventListener('scroll', toggleFooter);
         window.addEventListener('resize', toggleFooter);
 
-        function showModal(type, message) {
-            const modal = document.getElementById('modal');
-            const modalContent = document.querySelector('.modal-content p');
-            modal.className = `modal ${type}`;
-            modalContent.textContent = message;
-            modal.style.display = 'flex';
+        function updateCartCount() {
+            fetch('/cart/data')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('cart-count').textContent = data.cart_count;
+            })
+            .catch(error => console.error('Error updating cart count:', error));
         }
 
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
-        }
+        window.addEventListener('load', updateCartCount);
     </script>
 </body>
 </html>
