@@ -38,7 +38,7 @@ class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     price = db.Column(db.Float, nullable=False)
-    image = db.Column(db.String(100), nullable=False)
+    images = db.Column(db.String(500), nullable=False)  # Comma-separated list of image paths
     description = db.Column(db.String(200))
 
 class CartItem(db.Model):
@@ -93,13 +93,13 @@ def init_db():
             db.create_all()
             if not Product.query.first():
                 products = [
-                    Product(name="Classic Tee", price=19.99, image="images/tee.jpg", description="Comfortable cotton t-shirt"),
-                    Product(name="Denim Jeans", price=49.99, image="images/jeans.jpg", description="Stylish blue jeans"),
-                    Product(name="Leather Jacket", price=89.99, image="images/jacket.jpg", description="Premium leather jacket"),
-                    Product(name="Sneakers", price=59.99, image="images/sneakers.jpg", description="Trendy casual shoes")
+                    Product(name="Classic Tee", price=19.99, images="images/tee1.jpg,images/tee2.jpg", description="Comfortable cotton t-shirt"),
+                    Product(name="Denim Jeans", price=49.99, images="images/jeans1.jpg,images/jeans2.jpg", description="Stylish blue jeans"),
+                    Product(name="Leather Jacket", price=89.99, images="images/jacket1.jpg,images/jacket2.jpg", description="Premium leather jacket"),
+                    Product(name="Sneakers", price=59.99, images="images/sneakers1.jpg,images/sneakers2.jpg", description="Trendy casual shoes")
                 ]
                 db.session.bulk_save_objects(products)
-                logger.info("Added default products")
+                logger.info("Added default products with multiple images")
             if not Admin.query.first():
                 admin = Admin(username='admin', password='admin123')
                 db.session.add(admin)
@@ -127,8 +127,7 @@ def index():
     search_query = request.args.get('search', '')
     branding = Branding.query.first()
     if search_query:
-        products = Product.query.filter(Product.name.ilike(f'%{search_query}%') | 
-                                      Product.description.ilike(f'%{search_query}%')).all()
+        products = Product.query.filter(Product.name.ilike(f'%{search_query}%')).all()  # Search only by name
         message = "No products found matching your search." if not products else None
     else:
         products = Product.query.all()
@@ -142,7 +141,7 @@ def search():
     return redirect(url_for('index', search=search_query))
 
 @app.route('/cart', methods=['GET', 'POST'])
-@csrf.exempt  # Temporary exemption; secure with token in production
+@csrf.exempt
 def cart():
     branding = Branding.query.first()
     cart_count = CartItem.query.count()
@@ -342,7 +341,7 @@ def orders():
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 image_path = f"images/{filename}"
-                new_product = Product(name=name, price=price, image=image_path, description=description)
+                new_product = Product(name=name, price=price, images=image_path, description=description)
                 db.session.add(new_product)
                 db.session.commit()
                 flash('Product added successfully!', 'success')
@@ -364,7 +363,7 @@ def orders():
                     if file and allowed_file(file.filename):
                         filename = secure_filename(file.filename)
                         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                        product.image = f"images/{filename}"
+                        product.images = f"{product.images},{filename}" if product.images else filename
                 db.session.commit()
                 flash('Product updated successfully!', 'success')
             return redirect(url_for('orders', role='seller'))
