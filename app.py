@@ -134,7 +134,6 @@ def index():
         products = Product.query.all()
         message = None
     cart_count = CartItem.query.count()
-    # Log products and their images for debugging
     for product in products:
         logger.info(f"Product: {product.name}, Images: {product.images}")
     return render_template('index.html', products=products, message=message, search_query=search_query, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
@@ -380,6 +379,23 @@ def orders():
                 db.session.commit()
                 cache.delete('index_view')
                 flash('Product updated successfully!', 'success')
+            return redirect(url_for('orders', role='seller'))
+        
+        if request.method == 'POST' and 'delete_product_id' in request.form:
+            product_id = request.form['delete_product_id']
+            product = Product.query.get(product_id)
+            if product:
+                # Delete associated cart items and orders first due to foreign key constraints
+                CartItem.query.filter_by(product_id=product_id).delete()
+                Order.query.filter_by(product_id=product_id).delete()
+                db.session.delete(product)
+                db.session.commit()
+                cache.delete('index_view')  # Invalidate cache
+                logger.info(f"Deleted product {product_id}")
+                flash('Product deleted successfully!', 'success')
+            else:
+                logger.error(f"Product {product_id} not found for deletion")
+                flash('Product not found.', 'error')
             return redirect(url_for('orders', role='seller'))
         
         if request.method == 'POST' and 'update_status' in request.form:
