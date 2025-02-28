@@ -3,21 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orders - Elite Shop</title>
+    <title>Orders - {{ branding.site_name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
         <div class="container">
-            <h1 class="logo">Elite Shop</h1>
-            <form method="POST" action="/search" class="search-form">
-                <input type="text" name="search" placeholder="Search products..." class="search-input">
-                <button type="submit" class="search-btn">Search</button>
+            <h1 class="logo">
+                {% if branding.logo_path %}
+                    <img src="{{ url_for('static', filename=branding.logo_path) }}" alt="{{ branding.site_name }}" style="max-height: 40px; vertical-align: middle;">
+                {% else %}
+                    {{ branding.site_name }}
+                {% endif %}
+            </h1>
+            <form method="POST" action="/search" class="search-form" role="search">
+                <input type="text" name="search" placeholder="Search products..." class="search-input" aria-label="Search products">
+                <button type="submit" class="search-btn" aria-label="Submit search">Search</button>
             </form>
-            <nav>
-                <a href="/">Shop</a>
-                <a href="/cart">Cart</a>
+            <nav role="navigation">
+                <a href="/" aria-label="Shop page">Shop</a>
+                <a href="/cart" aria-label="Cart page">Cart</a>
             </nav>
         </div>
     </header>
@@ -26,30 +32,31 @@
         <div class="main-container">
             <h2>Orders Dashboard</h2>
             <div class="dashboard-toggle">
-                <a href="{{ url_for('orders', role='buyer') }}" class="toggle-btn {% if role == 'buyer' %}active{% endif %}">Buyer View</a>
-                <a href="{{ url_for('orders', role='seller') }}" class="toggle-btn {% if role == 'seller' %}active{% endif %}">Seller View</a>
+                <a href="{{ url_for('orders', role='buyer') }}" class="toggle-btn {% if role == 'buyer' %}active{% endif %}" aria-label="Buyer view">Buyer View</a>
+                <a href="{{ url_for('orders', role='seller') }}" class="toggle-btn {% if role == 'seller' %}active{% endif %}" aria-label="Seller view">Seller View</a>
             </div>
 
             {% if role == 'buyer' and not buyer_phone %}
                 <div class="buyer-login">
                     <h3>Buyer Login</h3>
                     {% if error %}
-                        <p class="message">{{ error }}</p>
+                        <p class="message" role="alert">{{ error }}</p>
                     {% endif %}
-                    <form method="POST">
-                        <input type="tel" name="buyer_phone" placeholder="Enter Your Phone Number" required pattern="[0-9]{10}" title="Enter a 10-digit phone number">
-                        <button type="submit" class="btn">View Orders</button>
+                    <form method="POST" role="form">
+                        <input type="tel" name="buyer_phone" placeholder="Enter Your Phone Number" required pattern="[0-9]{10}" title="Enter a 10-digit phone number" aria-label="Phone number">
+                        <button type="submit" class="btn" aria-label="View orders">View Orders</button>
                     </form>
                 </div>
             {% elif role == 'seller' and not admin_logged_in %}
                 <div class="admin-login">
                     <h3>Admin Login</h3>
                     {% if error %}
-                        <p class="message">{{ error }}</p>
+                        <p class="message" role="alert">{{ error }}</p>
                     {% endif %}
-                    <form method="POST">
-                        <input type="password" name="password" placeholder="Enter Admin Password" required>
-                        <button type="submit" class="btn">Login</button>
+                    <form method="POST" role="form">
+                        <input type="text" name="username" placeholder="Username" required aria-label="Admin username">
+                        <input type="password" name="password" placeholder="Enter Admin Password" required aria-label="Admin password">
+                        <button type="submit" class="btn" aria-label="Login as admin">Login</button>
                     </form>
                 </div>
             {% else %}
@@ -83,14 +90,14 @@
                     <div class="admin-panel">
                         <h3>Add New Product</h3>
                         {% if error %}
-                            <p class="message">{{ error }}</p>
+                            <p class="message" role="alert">{{ error }}</p>
                         {% endif %}
-                        <form method="POST" class="admin-form" enctype="multipart/form-data">
-                            <input type="text" name="product_name" placeholder="Product Name" required>
-                            <input type="number" name="product_price" placeholder="Price (UGX)" step="0.01" required>
-                            <input type="file" name="product_image" accept="image/*" required>
-                            <input type="text" name="product_description" placeholder="Description" required>
-                            <button type="submit">Add Product</button>
+                        <form method="POST" class="admin-form" enctype="multipart/form-data" role="form">
+                            <input type="text" name="product_name" placeholder="Product Name" required aria-label="Product name">
+                            <input type="number" name="product_price" placeholder="Price (UGX)" step="0.01" required aria-label="Product price">
+                            <input type="file" name="product_image" accept="image/*" required aria-label="Product image">
+                            <input type="text" name="product_description" placeholder="Description" required aria-label="Product description">
+                            <button type="submit" aria-label="Add product">Add Product</button>
                         </form>
 
                         <h3>Manage Products</h3>
@@ -98,21 +105,23 @@
                             {% for product in products %}
                             <div class="product-item">
                                 <p>{{ product.name }} - UGX {{ "%.2f"|format(product.price) }}</p>
-                                <button onclick="showEditForm({{ product.id }})" class="edit-btn">Edit</button>
-                                <form method="POST" id="edit-form-{{ product.id }}" class="edit-form" style="display: none;" enctype="multipart/form-data">
+                                <button onclick="showEditForm({{ product.id }})" class="edit-btn" aria-label="Edit {{ product.name }}">Edit</button>
+                                <form method="POST" id="edit-form-{{ product.id }}" class="edit-form" style="display: none;" enctype="multipart/form-data" role="form">
                                     <input type="hidden" name="edit_product_id" value="{{ product.id }}">
-                                    <input type="text" name="edit_product_name" value="{{ product.name }}" required>
-                                    <input type="number" name="edit_product_price" value="{{ product.price }}" step="0.01" required>
-                                    <input type="file" name="edit_product_image" accept="image/*">
-                                    <input type="text" name="edit_product_description" value="{{ product.description }}" required>
-                                    <button type="submit">Update Product</button>
+                                    <input type="text" name="edit_product_name" value="{{ product.name }}" required aria-label="Edit product name">
+                                    <input type="number" name="edit_product_price" value="{{ product.price }}" step="0.01" required aria-label="Edit product price">
+                                    <input type="file" name="edit_product_image" accept="image/*" aria-label="Edit product image">
+                                    <input type="text" name="edit_product_description" value="{{ product.description }}" required aria-label="Edit product description">
+                                    <button type="submit" aria-label="Update {{ product.name }}">Update Product</button>
                                 </form>
                             </div>
                             {% endfor %}
                         </div>
 
-                        <form method="POST" action="{{ url_for('logout', role='seller') }}" class="logout-form">
-                            <button type="submit" class="btn remove-btn">Logout</button>
+                        <a href="{{ url_for('manage_admins') }}" class="btn" aria-label="Manage admins">Manage Admins</a>
+                        <a href="{{ url_for('branding') }}" class="btn" aria-label="Update branding">Update Branding</a>
+                        <form method="POST" action="{{ url_for('logout', role='seller') }}" class="logout-form" role="form">
+                            <button type="submit" class="btn remove-btn" aria-label="Logout">Logout</button>
                         </form>
                     </div>
                 {% endif %}
@@ -144,8 +153,8 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
-                            <form method="POST" action="{{ url_for('logout', role='buyer') }}" class="logout-form">
-                                <button type="submit" class="btn remove-btn">Logout</button>
+                            <form method="POST" action="{{ url_for('logout', role='buyer') }}" class="logout-form" role="form">
+                                <button type="submit" class="btn remove-btn" aria-label="Logout">Logout</button>
                             </form>
                         </div>
                     {% else %}
@@ -177,18 +186,18 @@
                                         <td data-label="Customer Phone">{{ order.customer_phone }}</td>
                                         <td data-label="Status">{{ order.status }}</td>
                                         <td data-label="Action">
-                                            <form method="POST" class="status-form" style="display: inline;">
+                                            <form method="POST" class="status-form" style="display: inline;" role="form">
                                                 <input type="hidden" name="product_id" value="{{ order.product_id }}">
                                                 <input type="hidden" name="customer_phone" value="{{ order.customer_phone }}">
                                                 <input type="hidden" name="update_status" value="true">
-                                                <select name="status" onchange="this.form.submit()">
+                                                <select name="status" onchange="this.form.submit()" aria-label="Update status for order {{ order.product_id }}">
                                                     <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
                                                     <option value="Received" {% if order.status == 'Received' %}selected{% endif %}>Received</option>
                                                     <option value="Approved" {% if order.status == 'Approved' %}selected{% endif %}>Approved</option>
                                                     <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>Completed</option>
                                                 </select>
                                             </form>
-                                            <button onclick="deleteOrder({{ order.product_id }}, '{{ order.customer_phone }}')" class="btn remove-btn" style="margin-left: 10px;">Delete</button>
+                                            <button onclick="deleteOrder({{ order.product_id }}, '{{ order.customer_phone }}')" class="btn remove-btn" style="margin-left: 10px;" aria-label="Delete order {{ order.product_id }}">Delete</button>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -198,10 +207,10 @@
                         {% endfor %}
                     {% endif %}
                 {% else %}
-                    <p class="message">No orders found.</p>
+                    <p class="message" role="alert">No orders found.</p>
                     {% if role == 'buyer' %}
-                        <form method="POST" action="{{ url_for('logout', role='buyer') }}" class="logout-form">
-                            <button type="submit" class="btn remove-btn">Logout</button>
+                        <form method="POST" action="{{ url_for('logout', role='buyer') }}" class="logout-form" role="form">
+                            <button type="submit" class="btn remove-btn" aria-label="Logout">Logout</button>
                         </form>
                     {% endif %}
                 {% endif %}
@@ -209,11 +218,13 @@
         </div>
     </section>
 
-    <footer>
+    <footer role="contentinfo">
         <div class="container">
-            <p>© 2025 Elite Shop. All rights reserved.</p>
+            <p>© 2025 {{ branding.site_name }}. All rights reserved.</p>
         </div>
     </footer>
+
+    {% include 'modal.html' %}
 
     <script>
         function showEditForm(productId) {
@@ -229,18 +240,17 @@
                 })
                 .then(res => res.json())
                 .then(data => {
-                    alert(data.message);
+                    showModal('success', data.message);
                     if (data.message === 'Order deleted successfully') {
                         location.reload();
                     }
                 })
                 .catch(error => {
-                    alert('Error deleting order: ' + error);
+                    showModal('error', 'Error deleting order: ' + error);
                 });
             }
         }
 
-        // Footer visibility logic
         function toggleFooter() {
             const footer = document.querySelector('footer');
             const bodyHeight = document.body.scrollHeight;
@@ -248,15 +258,27 @@
             const scrollPosition = window.scrollY + viewportHeight;
 
             if (bodyHeight <= viewportHeight) {
-                footer.style.display = 'none'; // Hide if content fits viewport
+                footer.style.display = 'none';
             } else {
-                footer.style.display = (scrollPosition >= bodyHeight - 10) ? 'block' : 'none'; // Show near bottom
+                footer.style.display = (scrollPosition >= bodyHeight - 10) ? 'block' : 'none';
             }
         }
 
         window.addEventListener('load', toggleFooter);
         window.addEventListener('scroll', toggleFooter);
         window.addEventListener('resize', toggleFooter);
+
+        function showModal(type, message) {
+            const modal = document.getElementById('modal');
+            const modalContent = document.querySelector('.modal-content p');
+            modal.className = `modal ${type}`;
+            modalContent.textContent = message;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
     </script>
 </body>
 </html>
