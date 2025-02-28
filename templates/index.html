@@ -17,9 +17,9 @@
                     {{ branding.site_name }}
                 {% endif %}
             </h1>
-            <form method="POST" action="/search" class="search-form" role="search">
+            <form method="POST" action="/search" class="search-form" role="search" id="search-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <input type="text" name="search" placeholder="Search products..." value="{{ search_query }}" class="search-input" aria-label="Search products">
+                <input type="text" name="search" id="search-input" placeholder="Search products by name..." value="{{ search_query }}" class="search-input" aria-label="Search products">
                 <button type="submit" class="search-btn" aria-label="Submit search">Search</button>
             </form>
             <nav role="navigation">
@@ -39,7 +39,19 @@
             <div class="products">
                 {% for product in products %}
                 <div class="product">
-                    <img src="{{ url_for('static', filename=product.image) }}" alt="{{ product.name }}" class="product-image">
+                    <div class="image-container">
+                        {% set image_list = product.images.split(',') %}
+                        {% for image in image_list %}
+                        <img src="{{ url_for('static', filename=image) }}" alt="{{ product.name }} image {{ loop.index }}" class="product-image" style="display: {{ 'block' if loop.index0 == 0 else 'none' }};">
+                        {% endfor %}
+                        {% if image_list|length > 1 %}
+                        <div class="image-bars">
+                            {% for image in image_list %}
+                            <span class="image-bar {% if loop.index0 == 0 %}active{% endif %}" onclick="showImage({{ product.id }}, {{ loop.index0 }})"></span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
                     <h3>{{ product.name }}</h3>
                     <p class="description">{{ product.description }}</p>
                     <p class="price">UGX {{ "%.2f"|format(product.price) }}</p>
@@ -125,6 +137,18 @@
             });
         }
 
+        function showImage(productId, imageIndex) {
+            const productDiv = document.querySelector(`#quantity-${productId}`).closest('.product');
+            const images = productDiv.querySelectorAll('.product-image');
+            const bars = productDiv.querySelectorAll('.image-bar');
+            images.forEach((img, idx) => {
+                img.style.display = idx === imageIndex ? 'block' : 'none';
+            });
+            bars.forEach((bar, idx) => {
+                bar.classList.toggle('active', idx === imageIndex);
+            });
+        }
+
         function showModal(type, message) {
             const modal = document.getElementById('modal');
             const modalContent = document.querySelector('.modal-content p');
@@ -141,6 +165,13 @@
             const modal = document.getElementById('modal');
             if (modal) modal.style.display = 'none';
         }
+
+        // Search input handling
+        document.getElementById('search-input').addEventListener('input', function(e) {
+            if (!e.target.value.trim()) {
+                window.location.href = '/'; // Reset to full product list when cleared
+            }
+        });
 
         window.addEventListener('load', updateCartCount);
     </script>
