@@ -95,131 +95,142 @@
 
                 {% if role == 'seller' %}
                     <div class="admin-panel">
-                        <h3>Add New Product</h3>
-                        {% if error %}
-                            <p class="message" role="alert">{{ error }}</p>
-                        {% endif %}
-                        <form method="POST" class="admin-form" enctype="multipart/form-data" role="form">
-                            <input type="text" name="product_name" placeholder="Product Name" required aria-label="Product name">
-                            <input type="number" name="product_price" placeholder="Price (UGX)" step="0.01" required aria-label="Product price">
-                            <input type="file" name="product_image" accept="image/*" required aria-label="Product image">
-                            <input type="text" name="product_description" placeholder="Description" required aria-label="Product description">
-                            <button type="submit" aria-label="Add product">Add Product</button>
-                        </form>
-
-                        <h3>Manage Products</h3>
-                        <div class="products-list">
-                            {% for product in products %}
-                            <div class="product-item">
-                                <p>{{ product.name }} - UGX {{ "%.2f"|format(product.price) }}</p>
-                                <button onclick="showEditForm({{ product.id }})" class="edit-btn" aria-label="Edit {{ product.name }}">Edit</button>
-                                <form method="POST" id="edit-form-{{ product.id }}" class="edit-form" style="display: none;" enctype="multipart/form-data" role="form">
-                                    <input type="hidden" name="edit_product_id" value="{{ product.id }}">
-                                    <input type="text" name="edit_product_name" value="{{ product.name }}" required aria-label="Edit product name">
-                                    <input type="number" name="edit_product_price" value="{{ product.price }}" step="0.01" required aria-label="Edit product price">
-                                    <input type="file" name="edit_product_image" accept="image/*" aria-label="Edit product image">
-                                    <input type="text" name="edit_product_description" value="{{ product.description }}" required aria-label="Edit product description">
-                                    <button type="submit" aria-label="Update {{ product.name }}">Update Product</button>
-                                </form>
-                            </div>
-                            {% endfor %}
+                        <div class="admin-menu">
+                            <button class="menu-toggle btn" aria-label="Toggle admin menu">Menu</button>
+                            <ul class="menu-items">
+                                <li><a href="#add-product" class="menu-link" onclick="toggleSection('add-product')">Add New Product</a></li>
+                                <li><a href="#manage-products" class="menu-link" onclick="toggleSection('manage-products')">Manage Products</a></li>
+                                <li><a href="{{ url_for('manage_admins') }}" class="menu-link">Manage Admins</a></li>
+                                <li><a href="{{ url_for('branding') }}" class="menu-link">Update Branding</a></li>
+                                <li><a href="#your-orders" class="menu-link" onclick="toggleSection('your-orders')">Your Orders</a></li>
+                            </ul>
                         </div>
 
-                        <a href="{{ url_for('manage_admins') }}" class="btn" aria-label="Manage admins">Manage Admins</a>
-                        <a href="{{ url_for('branding') }}" class="btn" aria-label="Update branding">Update Branding</a>
+                        <div id="add-product" class="menu-section" style="display: none;">
+                            <h3>Add New Product</h3>
+                            {% if error %}
+                                <p class="message" role="alert">{{ error }}</p>
+                            {% endif %}
+                            <form method="POST" class="admin-form" enctype="multipart/form-data" role="form">
+                                <input type="text" name="product_name" placeholder="Product Name" required aria-label="Product name">
+                                <input type="number" name="product_price" placeholder="Price (UGX)" step="0.01" required aria-label="Product price">
+                                <input type="file" name="product_image" accept="image/*" required aria-label="Product image">
+                                <input type="text" name="product_description" placeholder="Description" required aria-label="Product description">
+                                <button type="submit" aria-label="Add product">Add Product</button>
+                            </form>
+                        </div>
+
+                        <div id="manage-products" class="menu-section" style="display: none;">
+                            <h3>Manage Products</h3>
+                            <div class="products-list">
+                                {% for product in products %}
+                                <div class="product-item">
+                                    <p>{{ product.name }} - UGX {{ "%.2f"|format(product.price) }}</p>
+                                    <button onclick="showEditForm({{ product.id }})" class="edit-btn" aria-label="Edit {{ product.name }}">Edit</button>
+                                    <form method="POST" id="edit-form-{{ product.id }}" class="edit-form" style="display: none;" enctype="multipart/form-data" role="form">
+                                        <input type="hidden" name="edit_product_id" value="{{ product.id }}">
+                                        <input type="text" name="edit_product_name" value="{{ product.name }}" required aria-label="Edit product name">
+                                        <input type="number" name="edit_product_price" value="{{ product.price }}" step="0.01" required aria-label="Edit product price">
+                                        <input type="file" name="edit_product_image" accept="image/*" aria-label="Edit product image">
+                                        <input type="text" name="edit_product_description" value="{{ product.description }}" required aria-label="Edit product description">
+                                        <button type="submit" aria-label="Update {{ product.name }}">Update Product</button>
+                                    </form>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div id="your-orders" class="menu-section" style="display: none;">
+                            <h3>Your Orders</h3>
+                            {% if orders %}
+                                {% set grouped_orders = orders | groupby('customer_phone') %}
+                                {% for phone, customer_orders in grouped_orders %}
+                                <div class="order-table-container">
+                                    <h4 class="customer-header">Orders for {{ customer_orders[0].customer_name }} ({{ phone }})</h4>
+                                    <table class="order-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Product ID</th>
+                                                <th>Product</th>
+                                                <th>Quantity</th>
+                                                <th>Total Price</th>
+                                                <th>Customer Name</th>
+                                                <th>Customer Phone</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for order in customer_orders %}
+                                            <tr>
+                                                <td data-label="Product ID">{{ order.product_id }}</td>
+                                                <td data-label="Product">{{ order.name }}</td>
+                                                <td data-label="Quantity">{{ order.quantity }}</td>
+                                                <td data-label="Total Price" class="money">UGX {{ "%.2f"|format(order.total_price) }}</td>
+                                                <td data-label="Customer Name">{{ order.customer_name }}</td>
+                                                <td data-label="Customer Phone">{{ order.customer_phone }}</td>
+                                                <td data-label="Status">{{ order.status }}</td>
+                                                <td data-label="Action">
+                                                    <form method="POST" class="status-form" style="display: inline;" role="form">
+                                                        <input type="hidden" name="product_id" value="{{ order.product_id }}">
+                                                        <input type="hidden" name="customer_phone" value="{{ order.customer_phone }}">
+                                                        <input type="hidden" name="update_status" value="true">
+                                                        <select name="status" onchange="this.form.submit()" aria-label="Update status for order {{ order.product_id }}">
+                                                            <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                                            <option value="Received" {% if order.status == 'Received' %}selected{% endif %}>Received</option>
+                                                            <option value="Approved" {% if order.status == 'Approved' %}selected{% endif %}>Approved</option>
+                                                            <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                                        </select>
+                                                    </form>
+                                                    <button onclick="deleteOrder({{ order.product_id }}, '{{ order.customer_phone }}')" class="btn remove-btn" style="margin-left: 10px;" aria-label="Delete order {{ order.product_id }}">Delete</button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="message" role="alert">No orders found.</p>
+                            {% endif %}
+                        </div>
+
                         <form method="POST" action="{{ url_for('logout', role='seller') }}" class="logout-form" role="form">
                             <button type="submit" class="btn remove-btn" aria-label="Logout">Logout</button>
                         </form>
                     </div>
                 {% endif %}
 
-                <h3 class="orders-title">Your Orders</h3>
-                {% if orders %}
-                    {% if role == 'buyer' %}
-                        <div class="order-table-container">
-                            <h4 class="customer-header">Your Orders ({{ buyer_phone }})</h4>
-                            <table class="order-table">
-                                <thead>
-                                    <tr>
-                                        <th>Product ID</th>
-                                        <th>Product</th>
-                                        <th>Quantity</th>
-                                        <th>Total Price</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for order in orders %}
-                                    <tr>
-                                        <td data-label="Product ID">{{ order.product_id }}</td>
-                                        <td data-label="Product">{{ order.name }}</td>
-                                        <td data-label="Quantity">{{ order.quantity }}</td>
-                                        <td data-label="Total Price" class="money">UGX {{ "%.2f"|format(order.total_price) }}</td>
-                                        <td data-label="Status">{{ order.status }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                            <form method="POST" action="{{ url_for('logout', role='buyer') }}" class="logout-form" role="form">
-                                <button type="submit" class="btn remove-btn" aria-label="Logout">Logout</button>
-                            </form>
-                        </div>
-                    {% else %}
-                        {% set grouped_orders = orders | groupby('customer_phone') %}
-                        {% for phone, customer_orders in grouped_orders %}
-                        <div class="order-table-container">
-                            <h4 class="customer-header">Orders for {{ customer_orders[0].customer_name }} ({{ phone }})</h4>
-                            <table class="order-table">
-                                <thead>
-                                    <tr>
-                                        <th>Product ID</th>
-                                        <th>Product</th>
-                                        <th>Quantity</th>
-                                        <th>Total Price</th>
-                                        <th>Customer Name</th>
-                                        <th>Customer Phone</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for order in customer_orders %}
-                                    <tr>
-                                        <td data-label="Product ID">{{ order.product_id }}</td>
-                                        <td data-label="Product">{{ order.name }}</td>
-                                        <td data-label="Quantity">{{ order.quantity }}</td>
-                                        <td data-label="Total Price" class="money">UGX {{ "%.2f"|format(order.total_price) }}</td>
-                                        <td data-label="Customer Name">{{ order.customer_name }}</td>
-                                        <td data-label="Customer Phone">{{ order.customer_phone }}</td>
-                                        <td data-label="Status">{{ order.status }}</td>
-                                        <td data-label="Action">
-                                            <form method="POST" class="status-form" style="display: inline;" role="form">
-                                                <input type="hidden" name="product_id" value="{{ order.product_id }}">
-                                                <input type="hidden" name="customer_phone" value="{{ order.customer_phone }}">
-                                                <input type="hidden" name="update_status" value="true">
-                                                <select name="status" onchange="this.form.submit()" aria-label="Update status for order {{ order.product_id }}">
-                                                    <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
-                                                    <option value="Received" {% if order.status == 'Received' %}selected{% endif %}>Received</option>
-                                                    <option value="Approved" {% if order.status == 'Approved' %}selected{% endif %}>Approved</option>
-                                                    <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>Completed</option>
-                                                </select>
-                                            </form>
-                                            <button onclick="deleteOrder({{ order.product_id }}, '{{ order.customer_phone }}')" class="btn remove-btn" style="margin-left: 10px;" aria-label="Delete order {{ order.product_id }}">Delete</button>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        {% endfor %}
-                    {% endif %}
-                {% else %}
-                    <p class="message" role="alert">No orders found.</p>
-                    {% if role == 'buyer' %}
+                {% if role == 'buyer' and orders %}
+                    <h3 class="orders-title">Your Orders</h3>
+                    <div class="order-table-container">
+                        <h4 class="customer-header">Your Orders ({{ buyer_phone }})</h4>
+                        <table class="order-table">
+                            <thead>
+                                <tr>
+                                    <th>Product ID</th>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Total Price</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr>
+                                    <td data-label="Product ID">{{ order.product_id }}</td>
+                                    <td data-label="Product">{{ order.name }}</td>
+                                    <td data-label="Quantity">{{ order.quantity }}</td>
+                                    <td data-label="Total Price" class="money">UGX {{ "%.2f"|format(order.total_price) }}</td>
+                                    <td data-label="Status">{{ order.status }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                         <form method="POST" action="{{ url_for('logout', role='buyer') }}" class="logout-form" role="form">
                             <button type="submit" class="btn remove-btn" aria-label="Logout">Logout</button>
                         </form>
-                    {% endif %}
+                    </div>
                 {% endif %}
             {% endif %}
         </div>
@@ -285,6 +296,23 @@
 
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
+        }
+
+        // Menu toggle functionality
+        document.querySelector('.menu-toggle').addEventListener('click', function() {
+            const menuItems = document.querySelector('.menu-items');
+            menuItems.style.display = menuItems.style.display === 'block' ? 'none' : 'block';
+        });
+
+        function toggleSection(sectionId) {
+            const sections = document.querySelectorAll('.menu-section');
+            sections.forEach(section => {
+                section.style.display = section.id === sectionId ? 'block' : 'none';
+            });
+            // Hide menu on mobile after selection
+            if (window.innerWidth <= 768) {
+                document.querySelector('.menu-items').style.display = 'none';
+            }
         }
     </script>
 </body>
