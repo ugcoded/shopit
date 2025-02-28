@@ -31,7 +31,7 @@
 
     <section class="orders-section">
         <div class="main-container">
-            <h2>Orders Dashboard</h2>
+            <h2>Admin Dashboard</h2>
             <div class="dashboard-toggle">
                 <a href="{{ url_for('orders', role='buyer') }}" class="toggle-btn {% if role == 'buyer' %}active{% endif %}" aria-label="Buyer view">Buyer View</a>
                 <a href="{{ url_for('orders', role='seller') }}" class="toggle-btn {% if role == 'seller' %}active{% endif %}" aria-label="Seller view">Seller View</a>
