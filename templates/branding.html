@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Branding - {{ branding.site_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1 class="logo">
+                {% if branding.logo_path %}
+                    <img src="{{ url_for('static', filename=branding.logo_path) }}" alt="{{ branding.site_name }}" style="max-height: 40px; vertical-align: middle;">
+                {% else %}
+                    {{ branding.site_name }}
+                {% endif %}
+            </h1>
+            <form method="POST" action="/search" class="search-form" role="search">
+                <input type="text" name="search" placeholder="Search products..." class="search-input" aria-label="Search products">
+                <button type="submit" class="search-btn" aria-label="Submit search">Search</button>
+            </form>
+            <nav role="navigation">
+                <a href="/" aria-label="Shop page">Shop</a>
+                <a href="/cart" aria-label="Cart page">Cart</a>
+                <a href="/orders?role=seller" aria-label="Orders page">Orders</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="orders-section">
+        <div class="main-container">
+            <h2>Update Branding</h2>
+            <div class="admin-panel">
+                <form method="POST" class="admin-form" enctype="multipart/form-data" role="form">
+                    {{ form.hidden_tag() }}
+                    <div>
+                        {{ form.site_name.label }}<br>
+                        {{ form.site_name(size=32, aria_label="Site name") }}
+                    </div>
+                    <div>
+                        {{ form.logo.label }}<br>
+                        {{ form.logo(aria_label="Upload site logo") }}
+                    </div>
+                    {{ form.submit(aria_label="Update branding") }}
+                </form>
+                {% if branding.logo_path %}
+                    <h3>Current Logo</h3>
+                    <img src="{{ url_for('static', filename=branding.logo_path) }}" alt="Current Logo" style="max-width: 200px;">
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <footer role="contentinfo">
+        <div class="container">
+            <p>© 2025 {{ branding.site_name }}. All rights reserved.</p>
+        </div>
+    </footer>
+
+    {% include 'modal.html' %}
+
+    <script>
+        function toggleFooter() {
+            const footer = document.querySelector('footer');
+            const bodyHeight = document.body.scrollHeight;
+            const viewportHeight = window.innerHeight;
+            const scrollPosition = window.scrollY + viewportHeight;
+
+            if (bodyHeight <= viewportHeight) {
+                footer.style.display = 'none';
+            } else {
+                footer.style.display = (scrollPosition >= bodyHeight - 10) ? 'block' : 'none';
+            }
+        }
+
+        window.addEventListener('load', toggleFooter);
+        window.addEventListener('scroll', toggleFooter);
+        window.addEventListener('resize', toggleFooter);
+
+        function showModal(type, message) {
+            const modal = document.getElementById('modal');
+            const modalContent = document.querySelector('.modal-content p');
+            modal.className = `modal ${type}`;
+            modalContent.textContent = message;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
