@@ -191,14 +191,46 @@ h3 {
     box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
 }
 
-.product-image {
+.image-container {
+    position: relative;
     max-width: 100%;
-    height: auto;
-    max-height: 220px;
+    height: 220px;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     border-radius: 12px;
-    margin-bottom: 1.25rem;
     border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.image-bars {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 5px;
+}
+
+.image-bar {
+    width: 8px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.image-bar.active {
+    background: #ffd700;
+}
+
+.image-bar:hover {
+    background: #fff;
 }
 
 .product h3, .cart-item h3 {
@@ -631,11 +663,11 @@ footer p {
 }
 
 .stat-card:nth-child(2) p {
-    color: #2ecc71; /* Green for Total Revenue or Total Spent */
+    color: #2ecc71;
 }
 
 .stat-card:not(:nth-child(2)) p {
-    color: #ffd700; /* Gold for others */
+    color: #ffd700;
 }
 
 .admin-panel {
@@ -1027,6 +1059,19 @@ footer p {
 
     .logout-form button {
         max-width: 200px;
+    }
+
+    .image-container {
+        height: 180px; /* Adjust for smaller screens */
+    }
+
+    .image-bars {
+        gap: 3px;
+    }
+
+    .image-bar {
+        width: 6px;
+        height: 20px;
     }
 }
 
