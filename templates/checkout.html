@@ -61,15 +61,12 @@
     <script>
         function toggleFooter() {
             const footer = document.querySelector('footer');
+            if (!footer) return;
             const bodyHeight = document.body.scrollHeight;
             const viewportHeight = window.innerHeight;
             const scrollPosition = window.scrollY + viewportHeight;
 
-            if (bodyHeight <= viewportHeight) {
-                footer.style.display = 'none';
-            } else {
-                footer.style.display = (scrollPosition >= bodyHeight - 10) ? 'block' : 'none';
-            }
+            footer.style.display = (bodyHeight <= viewportHeight || scrollPosition < bodyHeight - 10) ? 'none' : 'block';
         }
 
         window.addEventListener('load', toggleFooter);
@@ -77,12 +74,37 @@
         window.addEventListener('resize', toggleFooter);
 
         function updateCartCount() {
+            const cartCountElement = document.getElementById('cart-count');
+            if (!cartCountElement) return;
             fetch('/cart/data')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('cart-count').textContent = data.cart_count;
-            })
-            .catch(error => console.error('Error updating cart count:', error));
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to fetch cart data');
+                    return response.json();
+                })
+                .then(data => {
+                    cartCountElement.textContent = data.cart_count || 0;
+                })
+                .catch(error => {
+                    console.error('Error updating cart count:', error);
+                    cartCountElement.textContent = '0';
+                });
+        }
+
+        function showModal(type, message) {
+            const modal = document.getElementById('modal');
+            const modalContent = document.querySelector('.modal-content p');
+            if (!modal || !modalContent) {
+                console.error('Modal elements not found.');
+                return;
+            }
+            modal.className = `modal ${type}`;
+            modalContent.textContent = message;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            if (modal) modal.style.display = 'none';
         }
 
         window.addEventListener('load', updateCartCount);
