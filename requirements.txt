@@ -3,4 +3,5 @@ WTForms~=3.0.1
 werkzeug~=2.3.7
 SQLAlchemy~=2.0.38
 python-dotenv~=1.0.0
+Flask-SQLAlchemy==3.0.5  # Add this line
 gunicorn==20.1.0
