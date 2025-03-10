@@ -1,8 +1,6 @@
-Flask==2.3.2
-Flask-SQLAlchemy==3.0.5
-Flask-WTF==1.1.1
-Flask-Caching==2.0.2
-psycopg2-binary==2.9.6
-python-dotenv==1.0.0
-WTForms==3.0.1
+Flask~=2.3.2
+WTForms~=3.0.1
+werkzeug~=2.3.7
+SQLAlchemy~=2.0.38
+python-dotenv~=1.0.0
 gunicorn==20.1.0
