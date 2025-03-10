@@ -1,3 +1,4 @@
+# app.py
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
@@ -19,21 +20,22 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///shop.db')
+
+# Configure PostgreSQL database
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/images'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['CACHE_TYPE'] = 'SimpleCache'
+
 db = SQLAlchemy(app)
 csrf = CSRFProtect(app)
 cache = Cache(app)
 
-if not app.secret_key:
-    raise ValueError("SECRET_KEY must be set in environment variables")
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
+# Database Models
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -66,6 +68,7 @@ class Branding(db.Model):
     logo_path = db.Column(db.String(100))
     site_name = db.Column(db.String(100), default='Elite Shop')
 
+# Forms
 class AdminForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=4, max=50)])
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6, max=100)])
@@ -90,7 +93,6 @@ def init_db():
     try:
         with app.app_context():
             logger.info("Initializing database...")
-            db.drop_all()
             db.create_all()
             if not Product.query.first():
                 products = [
@@ -120,7 +122,13 @@ init_db()
 @app.before_request
 def enforce_https():
     if request.url.startswith('http://') and os.environ.get('FLASK_ENV') == 'production':
+        return redirect(request.url.replace('http://', 'https://'), 301)
+
+@app.before_request
+def enforce_https():
+    if request.url.startswith('http://') and os.environ.get('FLASK_ENV') == 'production':
         return redirect(request.url.replace('http://', 'https://'), code=301)
+
 
 @app.route('/', methods=['GET'])
 @cache.cached(timeout=60, key_prefix='index_view')
@@ -136,12 +144,15 @@ def index():
     cart_count = CartItem.query.count()
     for product in products:
         logger.info(f"Product: {product.name}, Images: {product.images}")
-    return render_template('index.html', products=products, message=message, search_query=search_query, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
+    return render_template('index.html', products=products, message=message, search_query=search_query,
+                           branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
+
 
 @app.route('/search', methods=['POST'])
 def search():
     search_query = request.form.get('search', '')
     return redirect(url_for('index', search=search_query))
+
 
 @app.route('/cart', methods=['GET', 'POST'])
 @csrf.exempt
@@ -153,11 +164,11 @@ def cart():
         logger.info(f"Received cart data: {data}")
         product_id = data.get('product_id')
         quantity = data.get('quantity', 1)
-        
+
         if not product_id:
             logger.error("Product ID missing in request")
             return jsonify({'message': 'Product ID required'}), 400
-        
+
         try:
             quantity = int(quantity)
             if quantity < 1:
@@ -182,12 +193,13 @@ def cart():
             return jsonify({'message': 'Error adding to cart'}), 500
     return render_template('cart.html', branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
 
+
 @app.route('/cart/remove/<int:product_id>', methods=['POST'])
 def remove_from_cart(product_id):
     data = request.get_json()
     if not data or 'quantity' not in data:
         return jsonify({'message': 'Invalid request data'}), 400
-    
+
     quantity_to_remove = int(data.get('quantity', 1))
     try:
         item = CartItem.query.filter_by(product_id=product_id).first()
@@ -206,10 +218,11 @@ def remove_from_cart(product_id):
         db.session.rollback()
         return jsonify({'message': 'Error removing item from cart'}), 500
 
+
 @app.route('/cart/data')
 def cart_data():
-    cart_items = db.session.query(CartItem.product_id, func.sum(CartItem.quantity).label('total_quantity'))\
-                           .group_by(CartItem.product_id).all()
+    cart_items = db.session.query(CartItem.product_id, func.sum(CartItem.quantity).label('total_quantity')) \
+        .group_by(CartItem.product_id).all()
     cart = []
     total = 0
     for product_id, quantity in cart_items:
@@ -223,6 +236,7 @@ def cart_data():
         total += product.price * quantity
     return jsonify({'items': cart, 'total': total, 'cart_count': CartItem.query.count()})
 
+
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
     branding = Branding.query.first()
@@ -232,8 +246,9 @@ def checkout():
         items = CartItem.query.all()
         if not items:
             flash('Cart is empty!', 'error')
-            return render_template('checkout.html', form=form, error="Cart is empty", branding=branding, cart_count=cart_count)
-        
+            return render_template('checkout.html', form=form, error="Cart is empty", branding=branding,
+                                   cart_count=cart_count)
+
         for item in items:
             order = Order(
                 product_id=item.product_id,
@@ -250,13 +265,14 @@ def checkout():
         return redirect(url_for('orders', role='buyer'))
     return render_template('checkout.html', form=form, branding=branding, cart_count=cart_count)
 
+
 @app.route('/orders', methods=['GET', 'POST'])
 def orders():
     branding = Branding.query.first()
     role = request.args.get('role', 'buyer')
     admin_login_form = AdminLoginForm()
     cart_count = CartItem.query.count()
-    
+
     if role == 'buyer' and request.method == 'POST' and 'buyer_phone' in request.form:
         phone = request.form['buyer_phone']
         if Order.query.filter_by(customer_phone=phone).first():
@@ -264,8 +280,9 @@ def orders():
             flash('Logged in successfully!', 'success')
         else:
             flash('No orders found for this phone number.', 'error')
-            return render_template('orders.html', role=role, error="No orders found for this phone number", branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
-    
+            return render_template('orders.html', role=role, error="No orders found for this phone number",
+                                   branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
+
     if role == 'seller' and request.method == 'POST' and admin_login_form.validate_on_submit():
         username = admin_login_form.username.data
         password = admin_login_form.password.data
@@ -279,21 +296,27 @@ def orders():
                 flash('Admin logged in successfully!', 'success')
             else:
                 flash('Incorrect password.', 'error')
-                return render_template('orders.html', role=role, error="Incorrect password", admin_login_form=admin_login_form, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
+                return render_template('orders.html', role=role, error="Incorrect password",
+                                       admin_login_form=admin_login_form, branding=branding, cart_count=cart_count,
+                                       csrf_token=generate_csrf())
         else:
             flash('Username not found.', 'error')
-            return render_template('orders.html', role=role, error="Username not found", admin_login_form=admin_login_form, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
-    
+            return render_template('orders.html', role=role, error="Username not found",
+                                   admin_login_form=admin_login_form, branding=branding, cart_count=cart_count,
+                                   csrf_token=generate_csrf())
+
     if role == 'buyer' and not session.get('buyer_phone'):
-        return render_template('orders.html', role=role, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
+        return render_template('orders.html', role=role, branding=branding, cart_count=cart_count,
+                               csrf_token=generate_csrf())
     if role == 'seller' and not session.get('admin_logged_in'):
-        return render_template('orders.html', role=role, admin_login_form=admin_login_form, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
-    
+        return render_template('orders.html', role=role, admin_login_form=admin_login_form, branding=branding,
+                               cart_count=cart_count, csrf_token=generate_csrf())
+
     if role == 'buyer':
         buyer_phone = session.get('buyer_phone')
-        orders = db.session.query(Order.product_id, func.sum(Order.quantity).label('total_quantity'), Order.status)\
-                           .filter_by(customer_phone=buyer_phone)\
-                           .group_by(Order.product_id, Order.status).all()
+        orders = db.session.query(Order.product_id, func.sum(Order.quantity).label('total_quantity'), Order.status) \
+            .filter_by(customer_phone=buyer_phone) \
+            .group_by(Order.product_id, Order.status).all()
         order_list = []
         total_spent = 0
         for product_id, quantity, status in orders:
@@ -311,9 +334,9 @@ def orders():
             'total_spent': total_spent
         }
     elif role == 'seller' and session.get('admin_logged_in'):
-        orders = db.session.query(Order.product_id, func.sum(Order.quantity).label('total_quantity'), 
-                                 Order.customer_name, Order.customer_phone, Order.status)\
-                           .group_by(Order.product_id, Order.customer_name, Order.customer_phone, Order.status).all()
+        orders = db.session.query(Order.product_id, func.sum(Order.quantity).label('total_quantity'),
+                                  Order.customer_name, Order.customer_phone, Order.status) \
+            .group_by(Order.product_id, Order.customer_name, Order.customer_phone, Order.status).all()
         order_list = []
         total_revenue = 0
         for product_id, quantity, customer_name, customer_phone, status in orders:
@@ -334,7 +357,7 @@ def orders():
             'total_revenue': total_revenue,
             'products_count': len(products)
         }
-        
+
         if request.method == 'POST' and 'product_name' in request.form:
             name = request.form['product_name']
             price = float(request.form['product_price'])
@@ -355,9 +378,10 @@ def orders():
             else:
                 logger.error("Invalid or no image file uploaded")
                 flash('Invalid image file.', 'error')
-                return render_template('orders.html', role=role, dashboard_data=dashboard_data, 
-                                     products=products, admin_logged_in=True, error="Invalid image file", branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
-        
+                return render_template('orders.html', role=role, dashboard_data=dashboard_data,
+                                       products=products, admin_logged_in=True, error="Invalid image file",
+                                       branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
+
         if request.method == 'POST' and 'edit_product_id' in request.form:
             product_id = request.form['edit_product_id']
             product = Product.query.get(product_id)
@@ -372,13 +396,14 @@ def orders():
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                         file.save(file_path)
                         new_image_path = f"images/{filename}"
-                        logger.info(f"Updating product {product_id} with new image path: {new_image_path}, file saved at: {file_path}")
+                        logger.info(
+                            f"Updating product {product_id} with new image path: {new_image_path}, file saved at: {file_path}")
                         product.images = f"{product.images},{new_image_path}" if product.images else new_image_path
                 db.session.commit()
                 cache.delete('index_view')
                 flash('Product updated successfully!', 'success')
             return redirect(url_for('orders', role='seller'))
-        
+
         if request.method == 'POST' and 'delete_product_id' in request.form:
             product_id = request.form['delete_product_id']
             product = Product.query.get(product_id)
@@ -394,7 +419,7 @@ def orders():
                 logger.error(f"Product {product_id} not found for deletion")
                 flash('Product not found.', 'error')
             return redirect(url_for('orders', role='seller'))
-        
+
         if request.method == 'POST' and 'delete_image_product_id' in request.form:
             product_id = request.form['delete_image_product_id']
             image_to_delete = request.form['image_to_delete']
@@ -423,7 +448,7 @@ def orders():
                 logger.error(f"Product {product_id} not found or no image specified for deletion")
                 flash('Product or image not found.', 'error')
             return redirect(url_for('orders', role='seller'))
-        
+
         if request.method == 'POST' and 'update_status' in request.form:
             product_id = int(request.form['product_id'])
             customer_phone = request.form['customer_phone']
@@ -434,19 +459,22 @@ def orders():
             db.session.commit()
             flash('Order status updated!', 'success')
             return redirect(url_for('orders', role='seller'))
-    
+
     else:
         return redirect(url_for('orders'))
-    
-    return render_template('orders.html', orders=order_list, role=role, dashboard_data=dashboard_data, 
-                         admin_logged_in=session.get('admin_logged_in'), products=products if role == 'seller' else None,
-                         buyer_phone=session.get('buyer_phone') if role == 'buyer' else None, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
+
+    return render_template('orders.html', orders=order_list, role=role, dashboard_data=dashboard_data,
+                           admin_logged_in=session.get('admin_logged_in'),
+                           products=products if role == 'seller' else None,
+                           buyer_phone=session.get('buyer_phone') if role == 'buyer' else None, branding=branding,
+                           cart_count=cart_count, csrf_token=generate_csrf())
+
 
 @app.route('/orders/delete/<int:product_id>/<customer_phone>', methods=['POST'])
 def delete_order(product_id, customer_phone):
     if not session.get('admin_logged_in'):
         return jsonify({'message': 'Unauthorized'}), 403
-    
+
     orders_to_delete = Order.query.filter_by(product_id=product_id, customer_phone=customer_phone).all()
     if orders_to_delete:
         for order in orders_to_delete:
@@ -457,12 +485,13 @@ def delete_order(product_id, customer_phone):
     flash('Order not found.', 'error')
     return jsonify({'message': 'Order not found'}), 404
 
+
 @app.route('/manage_admins', methods=['GET', 'POST'])
 def manage_admins():
     if not session.get('admin_logged_in'):
         flash('You must be logged in as an admin.', 'error')
         return redirect(url_for('orders', role='seller'))
-    
+
     branding = Branding.query.first()
     form = AdminForm()
     cart_count = CartItem.query.count()
@@ -476,7 +505,7 @@ def manage_admins():
             db.session.add(new_admin)
             db.session.commit()
             flash(f'Admin {username} added successfully!', 'success')
-    
+
     admins = Admin.query.all()
     if request.method == 'POST' and 'change_password' in request.form:
         admin_id = int(request.form['admin_id'])
@@ -486,15 +515,17 @@ def manage_admins():
             admin.password = new_password
             db.session.commit()
             flash(f'Password for {admin.username} updated successfully!', 'success')
-    
-    return render_template('manage_admins.html', form=form, admins=admins, branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
+
+    return render_template('manage_admins.html', form=form, admins=admins, branding=branding, cart_count=cart_count,
+                           csrf_token=generate_csrf())
+
 
 @app.route('/branding', methods=['GET', 'POST'])
 def branding():
     if not session.get('admin_logged_in'):
         flash('You must be logged in as an admin.', 'error')
         return redirect(url_for('orders', role='seller'))
-    
+
     branding = Branding.query.first()
     form = BrandingForm(obj=branding)
     cart_count = CartItem.query.count()
@@ -507,8 +538,9 @@ def branding():
         db.session.commit()
         flash('Branding updated successfully!', 'success')
         return redirect(url_for('orders', role='seller'))
-    
+
     return render_template('branding.html', form=form, branding=branding, cart_count=cart_count)
+
 
 @app.route('/logout', methods=['POST'])
 def logout():
@@ -525,6 +557,7 @@ def logout():
     role = request.args.get('role', 'buyer')
     logger.info(f"Redirecting to orders page with role: {role}")
     return redirect(url_for('orders', role=role))
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
