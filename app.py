@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
@@ -117,18 +116,14 @@ def init_db():
         logger.error(f"Failed to initialize database: {str(e)}")
         raise
 
+# Initialize database on startup
 init_db()
 
-@app.before_request
-def enforce_https():
-    if request.url.startswith('http://') and os.environ.get('FLASK_ENV') == 'production':
-        return redirect(request.url.replace('http://', 'https://'), 301)
-
+# Combined HTTPS enforcement (fixed duplicate)
 @app.before_request
 def enforce_https():
     if request.url.startswith('http://') and os.environ.get('FLASK_ENV') == 'production':
         return redirect(request.url.replace('http://', 'https://'), code=301)
-
 
 @app.route('/', methods=['GET'])
 @cache.cached(timeout=60, key_prefix='index_view')
@@ -147,12 +142,10 @@ def index():
     return render_template('index.html', products=products, message=message, search_query=search_query,
                            branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
 
-
 @app.route('/search', methods=['POST'])
 def search():
     search_query = request.form.get('search', '')
     return redirect(url_for('index', search=search_query))
-
 
 @app.route('/cart', methods=['GET', 'POST'])
 @csrf.exempt
@@ -193,7 +186,6 @@ def cart():
             return jsonify({'message': 'Error adding to cart'}), 500
     return render_template('cart.html', branding=branding, cart_count=cart_count, csrf_token=generate_csrf())
 
-
 @app.route('/cart/remove/<int:product_id>', methods=['POST'])
 def remove_from_cart(product_id):
     data = request.get_json()
@@ -218,7 +210,6 @@ def remove_from_cart(product_id):
         db.session.rollback()
         return jsonify({'message': 'Error removing item from cart'}), 500
 
-
 @app.route('/cart/data')
 def cart_data():
     cart_items = db.session.query(CartItem.product_id, func.sum(CartItem.quantity).label('total_quantity')) \
@@ -235,7 +226,6 @@ def cart_data():
         })
         total += product.price * quantity
     return jsonify({'items': cart, 'total': total, 'cart_count': CartItem.query.count()})
-
 
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
@@ -264,7 +254,6 @@ def checkout():
         flash(f'Order placed successfully! Use your phone number ({form.phone.data}) to track your order.', 'success')
         return redirect(url_for('orders', role='buyer'))
     return render_template('checkout.html', form=form, branding=branding, cart_count=cart_count)
-
 
 @app.route('/orders', methods=['GET', 'POST'])
 def orders():
@@ -469,7 +458,6 @@ def orders():
                            buyer_phone=session.get('buyer_phone') if role == 'buyer' else None, branding=branding,
                            cart_count=cart_count, csrf_token=generate_csrf())
 
-
 @app.route('/orders/delete/<int:product_id>/<customer_phone>', methods=['POST'])
 def delete_order(product_id, customer_phone):
     if not session.get('admin_logged_in'):
@@ -484,7 +472,6 @@ def delete_order(product_id, customer_phone):
         return jsonify({'message': 'Order deleted successfully'}), 200
     flash('Order not found.', 'error')
     return jsonify({'message': 'Order not found'}), 404
-
 
 @app.route('/manage_admins', methods=['GET', 'POST'])
 def manage_admins():
@@ -519,7 +506,6 @@ def manage_admins():
     return render_template('manage_admins.html', form=form, admins=admins, branding=branding, cart_count=cart_count,
                            csrf_token=generate_csrf())
 
-
 @app.route('/branding', methods=['GET', 'POST'])
 def branding():
     if not session.get('admin_logged_in'):
@@ -541,7 +527,6 @@ def branding():
 
     return render_template('branding.html', form=form, branding=branding, cart_count=cart_count)
 
-
 @app.route('/logout', methods=['POST'])
 def logout():
     logger.info(f"Logout requested. Current session: {session}")
@@ -557,7 +542,6 @@ def logout():
     role = request.args.get('role', 'buyer')
     logger.info(f"Redirecting to orders page with role: {role}")
     return redirect(url_for('orders', role=role))
-
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
