@@ -21,7 +21,10 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY')
 
 # Configure PostgreSQL database
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace("postgres://", "postgresql://", 1)
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set")
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/images'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
@@ -92,6 +95,9 @@ def init_db():
     try:
         with app.app_context():
             logger.info("Initializing database...")
+            # Test database connection
+            db.session.execute('SELECT 1')
+            logger.info("Database connection successful")
             db.create_all()
             if not Product.query.first():
                 products = [
@@ -119,12 +125,13 @@ def init_db():
 # Initialize database on startup
 init_db()
 
-# Combined HTTPS enforcement (fixed duplicate)
 @app.before_request
 def enforce_https():
     if request.url.startswith('http://') and os.environ.get('FLASK_ENV') == 'production':
         return redirect(request.url.replace('http://', 'https://'), code=301)
 
+# Rest of your routes remain unchanged (omitted for brevity)
+# Include all routes from your previous app.py here:
 @app.route('/', methods=['GET'])
 @cache.cached(timeout=60, key_prefix='index_view')
 def index():
@@ -418,7 +425,6 @@ def orders():
                 if image_to_delete in images_list:
                     images_list.remove(image_to_delete)
                     product.images = ','.join(images_list) if images_list else ''
-                    # Optionally delete the file from static/images if desired
                     file_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(image_to_delete))
                     if os.path.exists(file_path):
                         try:
