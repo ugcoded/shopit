@@ -282,7 +282,8 @@ def orders():
     if role == 'seller' and request.method == 'POST' and admin_login_form.validate_on_submit():
         username = admin_login_form.username.data
         password = admin_login_form.password.data
-        logger.info(f"Attempting login with username    admin = Admin.query.filter_by(username=username).first()
+        logger.info(f"Attempting login with username: {username}")
+        admin = Admin.query.filter_by(username=username).first()
         if admin:
             logger.info(f"Found admin: {admin.username}, stored password: {admin.password}")
             if admin.password == password:
