@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash, make_response
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FileField
 from wtforms.validators import DataRequired, Length
@@ -7,7 +8,7 @@ from flask_wtf.csrf import CSRFProtect, generate_csrf
 from flask_caching import Cache
 import os
 from werkzeug.utils import secure_filename
-from sqlalchemy import func, text  # Import text here
+from sqlalchemy import func, text
 from dotenv import load_dotenv
 import logging
 
@@ -29,8 +30,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/images'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['CACHE_TYPE'] = 'SimpleCache'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)  # Ensure upload directory exists
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 csrf = CSRFProtect(app)
 cache = Cache(app)
 
@@ -95,11 +98,10 @@ def init_db():
     try:
         with app.app_context():
             logger.info("Initializing database...")
-            # Test database connection with text()
             db.session.execute(text('SELECT 1'))
             logger.info("Database connection successful")
             db.create_all()
-            if not Product.query.first():
+            if os.environ.get('SEED_DATA', 'False') == 'True' and not Product.query.first():
                 products = [
                     Product(name="Classic Tee", price=19.99, images="images/tee1.jpg,images/tee2.jpg", description="Comfortable cotton t-shirt"),
                     Product(name="Denim Jeans", price=49.99, images="images/jeans1.jpg,images/jeans2.jpg", description="Stylish blue jeans"),
@@ -108,11 +110,11 @@ def init_db():
                 ]
                 db.session.bulk_save_objects(products)
                 logger.info("Added default products with multiple images")
-            if not Admin.query.first():
+            if os.environ.get('SEED_DATA', 'False') == 'True' and not Admin.query.first():
                 admin = Admin(username='admin', password='admin123')
                 db.session.add(admin)
                 logger.info("Added default admin: admin/admin123")
-            if not Branding.query.first():
+            if os.environ.get('SEED_DATA', 'False') == 'True' and not Branding.query.first():
                 branding = Branding(site_name='Elite Shop')
                 db.session.add(branding)
                 logger.info("Added default branding")
@@ -280,8 +282,7 @@ def orders():
     if role == 'seller' and request.method == 'POST' and admin_login_form.validate_on_submit():
         username = admin_login_form.username.data
         password = admin_login_form.password.data
-        logger.info(f"Attempting login with username: {username}, password: {password}")
-        admin = Admin.query.filter_by(username=username).first()
+        logger.info(f"Attempting login with username    admin = Admin.query.filter_by(username=username).first()
         if admin:
             logger.info(f"Found admin: {admin.username}, stored password: {admin.password}")
             if admin.password == password:
