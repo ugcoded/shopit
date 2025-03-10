@@ -7,7 +7,7 @@ from flask_wtf.csrf import CSRFProtect, generate_csrf
 from flask_caching import Cache
 import os
 from werkzeug.utils import secure_filename
-from sqlalchemy import func
+from sqlalchemy import func, text  # Import text here
 from dotenv import load_dotenv
 import logging
 
@@ -95,8 +95,8 @@ def init_db():
     try:
         with app.app_context():
             logger.info("Initializing database...")
-            # Test database connection
-            db.session.execute('SELECT 1')
+            # Test database connection with text()
+            db.session.execute(text('SELECT 1'))
             logger.info("Database connection successful")
             db.create_all()
             if not Product.query.first():
@@ -130,8 +130,6 @@ def enforce_https():
     if request.url.startswith('http://') and os.environ.get('FLASK_ENV') == 'production':
         return redirect(request.url.replace('http://', 'https://'), code=301)
 
-# Rest of your routes remain unchanged (omitted for brevity)
-# Include all routes from your previous app.py here:
 @app.route('/', methods=['GET'])
 @cache.cached(timeout=60, key_prefix='index_view')
 def index():
