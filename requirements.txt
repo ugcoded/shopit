@@ -1,10 +1,11 @@
 Flask==3.0.2
 Flask-SQLAlchemy==3.0.5
+Flask-Migrate==4.0.7
 Flask-WTF==1.2.1
 WTForms==3.1.2
 Flask-Caching==2.1.0
-Werkzeug
+Werkzeug==2.3.8
 SQLAlchemy==2.0.28
 python-dotenv==1.0.1
 gunicorn==22.0.0
-psycopg2-binary==2.9.9  
+psycopg2-binary==2.9.9
